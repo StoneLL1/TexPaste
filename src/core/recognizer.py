@@ -82,7 +82,12 @@ class RecognitionWorker(QObject):
 
     async def _call_api(self) -> str:
         """Encode image and POST to the LLM API, returning the response text."""
+        # ===== DIAGNOSTIC: Image data =====
+        logger.info("[DIAG] Image bytes length: %d", len(self._image_bytes))
+        logger.info("[DIAG] First 16 bytes (hex): %s", self._image_bytes[:16].hex())
+
         b64 = base64.b64encode(self._image_bytes).decode("ascii")
+        logger.info("[DIAG] Base64 length: %d, first 50 chars: %s", len(b64), b64[:50])
 
         try:
             system_prompt = _PROMPT_PATH.read_text(encoding="utf-8")
@@ -112,6 +117,12 @@ class RecognitionWorker(QObject):
             "max_tokens": 4096,
         }
 
+        # ===== DIAGNOSTIC: Request structure =====
+        logger.info("[DIAG] API endpoint: %s/chat/completions", endpoint)
+        logger.info("[DIAG] Model: %s", model)
+        logger.info("[DIAG] System prompt length: %d", len(system_prompt))
+        logger.info("[DIAG] User content items: %d (text + image_url)", len(payload["messages"][1]["content"]))
+
         # NOTE: API key is never logged — only used in the Authorization header.
         headers = {
             "Authorization": f"Bearer {self._config['api_key']}",
@@ -128,7 +139,19 @@ class RecognitionWorker(QObject):
             )
             resp.raise_for_status()
 
-        return resp.json()["choices"][0]["message"]["content"]
+        # ===== DIAGNOSTIC: Response =====
+        resp_json = resp.json()
+        logger.info("[DIAG] Response status: %d", resp.status_code)
+        logger.info("[DIAG] Response JSON keys: %s", list(resp_json.keys()))
+
+        if "choices" in resp_json and resp_json["choices"]:
+            content = resp_json["choices"][0]["message"]["content"]
+            logger.info("[DIAG] Response content length: %d", len(content))
+            logger.info("[DIAG] Response content preview: %s", content[:200])
+            return content
+        else:
+            logger.error("[DIAG] Unexpected response structure: %s", resp_json)
+            raise ValueError(f"API 返回了非预期的结构: {resp_json}")
 
 
 class RecognizerService(QObject):

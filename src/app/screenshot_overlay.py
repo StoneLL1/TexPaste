@@ -108,10 +108,12 @@ class ScreenshotOverlay(QWidget):
             return
 
         dpr: float = screen.devicePixelRatio()
-        x: int = int(rect.x() * dpr)
-        y: int = int(rect.y() * dpr)
-        w: int = int(rect.width() * dpr)
-        h: int = int(rect.height() * dpr)
+        # Qt6 grabWindow expects logical coordinates; it handles DPR internally.
+        # Do NOT manually multiply by DPR — that causes coordinate offset on high-DPI screens.
+        x: int = int(rect.x())
+        y: int = int(rect.y())
+        w: int = int(rect.width())
+        h: int = int(rect.height())
 
         logger.debug("Grabbing region x=%d y=%d w=%d h=%d (DPR=%.2f)", x, y, w, h, dpr)
 

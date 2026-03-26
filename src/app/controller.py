@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QObject, QTimer, pyqtSlot as Slot
@@ -38,6 +40,7 @@ class AppController(QObject):
         self.config = config
         self._state = AppState.IDLE
         self._paused = False
+        self._last_screenshot_bytes: bytes | None = None  # For diagnostics
 
         self._init_services()
         self._connect_signals()
@@ -163,6 +166,7 @@ class AppController(QObject):
     @Slot(bytes)
     def _on_capture_complete(self, image_bytes: bytes) -> None:
         logger.info("Screenshot captured (%d bytes)", len(image_bytes))
+        self._last_screenshot_bytes = image_bytes  # Save for diagnostics
         self._set_state(AppState.RECOGNIZING)
         self.recognizer.recognize(image_bytes)
 
@@ -207,6 +211,21 @@ class AppController(QObject):
     @Slot(str)
     def _on_recognition_failed(self, error_msg: str) -> None:
         logger.error("Recognition failed: %s", error_msg)
+
+        # Save failed screenshot for diagnostics
+        if self._last_screenshot_bytes:
+            try:
+                app_data_dir = get_app_data_dir()
+                logs_dir = app_data_dir / "logs"
+                logs_dir.mkdir(parents=True, exist_ok=True)
+
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                debug_path = logs_dir / f"debug_screenshot_{timestamp}.png"
+                debug_path.write_bytes(self._last_screenshot_bytes)
+                logger.info("[DIAG] Failed screenshot saved to: %s", debug_path)
+            except Exception as e:
+                logger.warning("[DIAG] Could not save debug screenshot: %s", e)
+
         self._set_state(AppState.IDLE)
         self.tray.set_status_error()
         self.tray.show_notification(
