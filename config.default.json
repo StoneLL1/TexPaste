@@ -1,0 +1,28 @@
+{
+  "version": "1.0.0",
+  "api": {
+    "endpoint": "",
+    "api_key": "",
+    "model": "",
+    "timeout": 30,
+    "max_retries": 3
+  },
+  "hotkeys": {
+    "screenshot": "ctrl+shift+a",
+    "paste": "ctrl+shift+v"
+  },
+  "history": {
+    "retention_days": 7,
+    "max_records": 1000
+  },
+  "update": {
+    "auto_check": true,
+    "check_url": "https://api.github.com/repos/YOUR_USER/texpaste/releases/latest"
+  },
+  "pandoc": {
+    "executable": "pandoc"
+  },
+  "appearance": {
+    "theme": "system"
+  }
+}

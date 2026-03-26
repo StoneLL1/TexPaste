@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:github.com)",
+      "Bash(gh repo:*)",
+      "WebSearch",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(dir \"D:\\\\Users\\\\Aletta\\\\Desktop\\\\Works\\\\TexPaste\")",
+      "Bash(find D:UsersAlettaDesktopWorksTexPaste -type f \\\\\\(-name *.py -o -name *.json -o -name *.md \\\\\\))",
+      "Bash(find /d/Users/Aletta/Desktop/Works/TexPaste -type f \\\\\\(-name *.json -o -name *.txt -o -name *.toml -o -name *.spec -o -name *.py -o -name *.png -o -name *.ico -o -name *.md \\\\\\))",
+      "WebFetch(domain:bendyworks.com)",
+      "WebFetch(domain:breathmintsforpenguins.blogspot.com)",
+      "Bash(python -m pytest tests/unit/test_models.py -v)",
+      "Bash(python -m pytest tests/unit/test_config.py -v)",
+      "Bash(python -m pytest tests/unit/test_history.py -v)",
+      "Bash(python -m pytest tests/unit/test_content_type.py -v)",
+      "Read(//d D:/Users/Aletta/Desktop/Works/**)",
+      "Bash(python -c \"from PyQt6.QtCore import pyqtSlot; print\\(''pyqtSlot exists:'', pyqtSlot\\)\")",
+      "Bash(python -c \"from PyQt6.QtCore import pyqtSlot; print\\(''✓ pyqtSlot exists''\\)\")",
+      "Bash(python -c \"from PyQt6.QtCore import pyqtSlot; print\\(''OK: pyqtSlot exists''\\)\")",
+      "Bash(python -c \"from PyQt6.QtCore import Slot\")",
+      "Bash(python -c \"from PyQt6 import QtCore; attrs = [a for a in dir\\(QtCore\\) if ''slot'' in a.lower\\(\\)]; print\\(''Slot-related exports:'', attrs\\)\")"
+    ]
+  }
+}

@@ -1,0 +1,6 @@
+PyQt6>=6.4.0
+pynput>=1.7.6
+httpx>=0.24.0
+pywin32>=305
+pyperclip>=1.8.2
+psutil>=5.9.0

@@ -1,0 +1,15 @@
+config.json
+history.db
+*.db-wal
+*.db-shm
+logs/
+dist/
+build/
+__pycache__/
+.venv/
+*.pyc
+*.pyo
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+.pytest_cache/
