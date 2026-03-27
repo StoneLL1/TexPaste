@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ctypes
 import sys
 from pathlib import Path
 
@@ -18,6 +19,21 @@ from utils.config import ConfigManager  # noqa: E402
 from utils.startup import StartupChecker  # noqa: E402
 
 
+def _set_windows_app_user_model_id() -> None:
+    """Set AppUserModelID for Windows taskbar icon.
+
+    On Windows 7+, the taskbar icon is determined by AppUserModelID.
+    Without this, Python apps show the default python.exe icon.
+    Must be called before QApplication is created.
+    """
+    if sys.platform == "win32":
+        app_id = "TexPaste.TexPaste.1.0"
+        try:
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
+        except (AttributeError, OSError):
+            pass  # Ignore if the API is not available
+
+
 def _load_app_icon() -> QIcon:
     """Load the TexPaste application icon."""
     icon_path = Path(__file__).parent / "resources" / "icons" / "texpaste.ico"
@@ -34,6 +50,11 @@ def _show_fatal_error(title: str, message: str) -> None:
 
 
 def main() -> None:
+    # ------------------------------------------------------------------
+    # 0. Set Windows AppUserModelID (must be before QApplication)
+    # ------------------------------------------------------------------
+    _set_windows_app_user_model_id()
+
     # ------------------------------------------------------------------
     # 1. Create QApplication first (required for any Qt usage)
     # ------------------------------------------------------------------
