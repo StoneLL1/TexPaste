@@ -47,22 +47,9 @@ VersionInfoProductVersion={#MyAppVersion}
 DisableWelcomePage=no
 
 [Languages]
-Name: "chinesesimplified"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [CustomMessages]
-; Chinese messages
-chinesesimplified.InstallPandoc=安装 Pandoc 转换引擎
-chinesesimplified.InstallPandocDesc=Pandoc 用于将 LaTeX/Markdown 转换为 Word 格式，支持智能粘贴功能
-chinesesimplified.PandocDetected=已检测到系统安装了 Pandoc
-chinesesimplified.PandocNotFound=未检测到 Pandoc，建议安装以启用 Word/WPS 智能粘贴功能
-chinesesimplified.InstallingPandoc=正在安装 Pandoc...
-chinesesimplified.PandocInstallFailed=Pandoc 安装失败，您可能需要手动安装
-chinesesimplified.CreateDesktopIcon=创建桌面快捷方式
-chinesesimplified.AutoStart=开机自启动
-chinesesimplified.LaunchProgram=启动 TexPaste
-
-; English messages
 english.InstallPandoc=Install Pandoc converter
 english.InstallPandocDesc=Pandoc converts LaTeX/Markdown to Word format for smart paste feature
 english.PandocDetected=Pandoc is already installed on your system
