@@ -28,6 +28,16 @@ Example output: The quadratic formula is $x = \frac{-b \pm \sqrt{b^2-4ac}}{2a}$ 
 - Chemical equations: use mhchem syntax \ce{2H2 + O2 -> 2H2O}
 - Vectors and tensors: \vec{F}, \hat{n}, \mathbf{A}
 
+**Rule 4 — Tables:**
+If the image contains a table, output it in Markdown table syntax.
+Use | for columns and --- for header separators.
+If table cells contain formulas, apply the formula wrapping rules from Rule 3 within cells.
+Example output:
+| Variable | Value |
+|----------|-------|
+| $x$ | $3.14$ |
+| $\alpha$ | $0.05$ |
+
 ## Important Rules
 - Preserve the exact mathematical meaning; do not simplify or alter expressions
 - Use standard LaTeX syntax only

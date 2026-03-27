@@ -14,7 +14,15 @@ from utils.logger import get_logger
 
 logger = get_logger("core.recognizer")
 
-_PROMPT_PATH = Path(__file__).parent.parent / "resources" / "prompts" / "recognize.txt"
+_PROMPTS_DIR = Path(__file__).parent.parent / "resources" / "prompts"
+_PROMPT_PATH = _PROMPTS_DIR / "recognize.txt"
+
+PRESET_TEMPLATES: dict[str, str] = {
+    "智能识别": "recognize.txt",
+    "纯LaTeX": "pure_latex.txt",
+    "纯Markdown": "pure_markdown.txt",
+    "纯文本": "pure_text.txt",
+}
 
 
 class RecognitionWorker(QObject):
@@ -23,10 +31,12 @@ class RecognitionWorker(QObject):
     finished = Signal(str, str)  # (result, content_type_value)
     failed = Signal(str)  # (error_message)
 
-    def __init__(self, image_bytes: bytes, config: dict[str, Any]) -> None:
+    def __init__(self, image_bytes: bytes, config: dict[str, Any],
+                 system_prompt: str = "") -> None:
         super().__init__()
         self._image_bytes = image_bytes
         self._config = config
+        self._system_prompt = system_prompt
 
     @Slot()
     def run(self) -> None:
@@ -89,11 +99,13 @@ class RecognitionWorker(QObject):
         b64 = base64.b64encode(self._image_bytes).decode("ascii")
         logger.info("[DIAG] Base64 length: %d, first 50 chars: %s", len(b64), b64[:50])
 
-        try:
-            system_prompt = _PROMPT_PATH.read_text(encoding="utf-8")
-        except OSError:
-            logger.error("Could not read prompt file: %s", _PROMPT_PATH)
-            system_prompt = "You are a LaTeX/text recognition assistant."
+        system_prompt = self._system_prompt
+        if not system_prompt:
+            try:
+                system_prompt = _PROMPT_PATH.read_text(encoding="utf-8")
+            except OSError:
+                logger.error("Could not read prompt file: %s", _PROMPT_PATH)
+                system_prompt = "You are a LaTeX/text recognition assistant."
 
         endpoint: str = self._config["endpoint"].rstrip("/")
         model: str = self._config["model"]
@@ -169,6 +181,32 @@ class RecognizerService(QObject):
         self._active_threads: list[QThread] = []
         self._active_workers: list[RecognitionWorker] = []
 
+    def _resolve_system_prompt(self) -> str:
+        """Resolve the system prompt based on the currently selected template."""
+        current = self._config.get("templates.current", "智能识别")
+
+        # 1. Check preset templates
+        if current in PRESET_TEMPLATES:
+            path = _PROMPTS_DIR / PRESET_TEMPLATES[current]
+            try:
+                return path.read_text(encoding="utf-8")
+            except OSError:
+                logger.error("Could not read preset prompt: %s", path)
+
+        # 2. Check custom templates
+        else:
+            customs: list[dict[str, str]] = self._config.get("templates.custom", [])
+            for t in customs:
+                if t.get("name") == current:
+                    return t["prompt"]
+            logger.warning("Custom template '%s' not found, falling back to default", current)
+
+        # 3. Fallback to default
+        try:
+            return _PROMPT_PATH.read_text(encoding="utf-8")
+        except OSError:
+            return "You are a LaTeX/text recognition assistant."
+
     def recognize(self, image_bytes: bytes) -> None:
         """Start an async recognition job for *image_bytes*."""
         self._cancelled = False
@@ -181,8 +219,11 @@ class RecognizerService(QObject):
             "max_retries": self._config.get("api.max_retries", 3),
         }
 
+        system_prompt = self._resolve_system_prompt()
+        logger.info("Using template: %s", self._config.get("templates.current", "智能识别"))
+
         thread = QThread()
-        worker = RecognitionWorker(image_bytes, config_dict)
+        worker = RecognitionWorker(image_bytes, config_dict, system_prompt)
         worker.moveToThread(thread)
 
         # Wire up signals

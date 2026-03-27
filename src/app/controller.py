@@ -88,15 +88,20 @@ class AppController(QObject):
         self.tray.update_check_requested.connect(self._on_update_check_requested)
 
     def _start_services(self) -> None:
+        # Update template label in tray
+        current_template = self.config.get("templates.current", "智能识别")
+        self.tray.update_template_label(current_template)
+
         screenshot_key = self.config.get("hotkeys.screenshot", "ctrl+shift+a")
         paste_key = self.config.get("hotkeys.paste", "ctrl+shift+v")
         if not self.hotkey_manager.register(screenshot_key, paste_key):
             logger.error("Failed to register hotkeys")
-            self.tray.show_notification(
-                "TexPaste",
-                "全局快捷键注册失败，请检查是否有冲突。",
-                QSystemTrayIcon.MessageIcon.Warning,
-            )
+            if self._should_notify("error"):
+                self.tray.show_notification(
+                    "TexPaste",
+                    "全局快捷键注册失败，请检查是否有冲突。",
+                    QSystemTrayIcon.MessageIcon.Warning,
+                )
 
     def _schedule_cleanup(self) -> None:
         self._cleanup_timer = QTimer(self)
@@ -113,6 +118,10 @@ class AppController(QObject):
     def _set_state(self, state: AppState) -> None:
         logger.debug("State transition: %s → %s", self._state, state)
         self._state = state
+
+    def _should_notify(self, category: str) -> bool:
+        """Check if notifications are enabled for *category*."""
+        return bool(self.config.get(f"notifications.{category}", True))
 
     # ------------------------------------------------------------------
     # Hotkey handlers
@@ -136,20 +145,22 @@ class AppController(QObject):
 
         is_active, app_name = is_word_wps_active()
         if not is_active:
-            self.tray.show_notification(
-                "TexPaste",
-                "请先打开 Word 或 WPS 并将光标置于要插入的位置。",
-                QSystemTrayIcon.MessageIcon.Information,
-            )
+            if self._should_notify("error"):
+                self.tray.show_notification(
+                    "TexPaste",
+                    "请先打开 Word 或 WPS 并将光标置于要插入的位置。",
+                    QSystemTrayIcon.MessageIcon.Information,
+                )
             return
 
         content = self.clipboard.get_text()
         if not content.strip():
-            self.tray.show_notification(
-                "TexPaste",
-                "剪贴板为空，请先识别内容。",
-                QSystemTrayIcon.MessageIcon.Warning,
-            )
+            if self._should_notify("error"):
+                self.tray.show_notification(
+                    "TexPaste",
+                    "剪贴板为空，请先识别内容。",
+                    QSystemTrayIcon.MessageIcon.Warning,
+                )
             return
 
         self._set_state(AppState.PASTING)
@@ -202,11 +213,12 @@ class AppController(QObject):
 
         self._set_state(AppState.IDLE)
         self.tray.set_status_normal()
-        self.tray.show_notification(
-            "TexPaste",
-            "识别完成，已复制到剪贴板。",
-            QSystemTrayIcon.MessageIcon.Information,
-        )
+        if self._should_notify("recognition_success"):
+            self.tray.show_notification(
+                "TexPaste",
+                "识别完成，已复制到剪贴板。",
+                QSystemTrayIcon.MessageIcon.Information,
+            )
 
     @Slot(str)
     def _on_recognition_failed(self, error_msg: str) -> None:
@@ -228,11 +240,12 @@ class AppController(QObject):
 
         self._set_state(AppState.IDLE)
         self.tray.set_status_error()
-        self.tray.show_notification(
-            "TexPaste",
-            f"识别失败：{error_msg}",
-            QSystemTrayIcon.MessageIcon.Critical,
-        )
+        if self._should_notify("error"):
+            self.tray.show_notification(
+                "TexPaste",
+                f"识别失败：{error_msg}",
+                QSystemTrayIcon.MessageIcon.Critical,
+            )
         # Reset icon to normal after 5 seconds
         QTimer.singleShot(5000, self.tray.set_status_normal)
 
@@ -267,12 +280,14 @@ class AppController(QObject):
         self._set_state(AppState.IDLE)
         if success:
             self.tray.set_status_normal()
-            self.tray.show_notification("TexPaste", message,
-                                        QSystemTrayIcon.MessageIcon.Information)
+            if self._should_notify("paste_success"):
+                self.tray.show_notification("TexPaste", message,
+                                            QSystemTrayIcon.MessageIcon.Information)
         else:
             self.tray.set_status_error()
-            self.tray.show_notification("TexPaste", f"粘贴失败：{message}",
-                                        QSystemTrayIcon.MessageIcon.Warning)
+            if self._should_notify("error"):
+                self.tray.show_notification("TexPaste", f"粘贴失败：{message}",
+                                            QSystemTrayIcon.MessageIcon.Warning)
             QTimer.singleShot(5000, self.tray.set_status_normal)
 
     # ------------------------------------------------------------------
@@ -289,6 +304,11 @@ class AppController(QObject):
             screenshot_key = self.config.get("hotkeys.screenshot", "ctrl+shift+a")
             paste_key = self.config.get("hotkeys.paste", "ctrl+shift+v")
             self.hotkey_manager.update_hotkeys(screenshot_key, paste_key)
+
+            # Update template label in tray
+            current_template = self.config.get("templates.current", "智能识别")
+            self.tray.update_template_label(current_template)
+
             logger.info("Settings updated and hotkeys refreshed")
 
     @Slot()

@@ -1,9 +1,9 @@
 {
   "version": "1.0.0",
   "api": {
-    "endpoint": "",
+    "endpoint": "https://api.openai.com/v1",
     "api_key": "",
-    "model": "",
+    "model": "gpt-4o",
     "timeout": 30,
     "max_retries": 3
   },
@@ -24,5 +24,14 @@
   },
   "appearance": {
     "theme": "system"
+  },
+  "templates": {
+    "current": "智能识别",
+    "custom": []
+  },
+  "notifications": {
+    "recognition_success": true,
+    "paste_success": false,
+    "error": true
   }
 }

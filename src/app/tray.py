@@ -28,6 +28,12 @@ class TrayManager(QObject):
 
         menu = QMenu()
 
+        self._template_action = QAction("当前模板: 智能识别", self)
+        self._template_action.setEnabled(False)
+        menu.addAction(self._template_action)
+
+        menu.addSeparator()
+
         history_action = QAction("历史记录", self)
         history_action.triggered.connect(self.history_requested)
         menu.addAction(history_action)
@@ -95,6 +101,10 @@ class TrayManager(QObject):
             self.set_status_normal()
             logger.info("TexPaste resumed")
         self.pause_toggled.emit(self._is_paused)
+
+    def update_template_label(self, name: str) -> None:
+        """Update the template label in the tray menu."""
+        self._template_action.setText(f"当前模板: {name}")
 
     @staticmethod
     def _load_icon(name: str) -> QIcon:

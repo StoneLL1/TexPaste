@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import httpx
 from PyQt6.QtCore import QObject, QThread, pyqtSignal as Signal, Qt
 from PyQt6.QtWidgets import (
@@ -11,12 +13,17 @@ from PyQt6.QtWidgets import (
     QFormLayout,
     QGroupBox,
     QHBoxLayout,
+    QInputDialog,
     QLabel,
     QLineEdit,
+    QListWidget,
+    QListWidgetItem,
     QMessageBox,
+    QPlainTextEdit,
     QPushButton,
     QSizePolicy,
     QSpinBox,
+    QSplitter,
     QTabWidget,
     QVBoxLayout,
     QWidget,
@@ -26,6 +33,19 @@ from utils.config import ConfigManager
 from utils.logger import get_logger
 
 logger = get_logger(__name__)
+
+_PROMPTS_DIR = Path(__file__).parent.parent / "resources" / "prompts"
+
+_PRESET_TEMPLATE_NAMES: list[str] = ["智能识别", "纯LaTeX", "纯Markdown", "纯文本"]
+
+_PRESET_TEMPLATE_FILES: dict[str, str] = {
+    "智能识别": "recognize.txt",
+    "纯LaTeX": "pure_latex.txt",
+    "纯Markdown": "pure_markdown.txt",
+    "纯文本": "pure_text.txt",
+}
+
+_MAX_CUSTOM_TEMPLATES = 10
 
 _MODEL_PRESETS: list[str] = [
     "gpt-4o",
@@ -100,7 +120,7 @@ class SettingsUI(QDialog):
 
     def _setup_ui(self) -> None:
         self.setWindowTitle("TexPaste 设置")
-        self.setMinimumSize(480, 400)
+        self.setMinimumSize(640, 480)
         self.setModal(True)
 
         root_layout = QVBoxLayout(self)
@@ -113,6 +133,7 @@ class SettingsUI(QDialog):
         self._tabs.addTab(self._build_api_tab(), "API 配置")
         self._tabs.addTab(self._build_general_tab(), "通用")
         self._tabs.addTab(self._build_hotkeys_tab(), "快捷键")
+        self._tabs.addTab(self._build_templates_tab(), "模板")
 
         root_layout.addWidget(self._build_button_bar())
 
@@ -199,6 +220,20 @@ class SettingsUI(QDialog):
         form.addRow("自动检查更新", self._auto_update_check)
 
         outer.addWidget(group)
+
+        # Notification settings
+        notif_group = QGroupBox("通知设置")
+        notif_layout = QVBoxLayout(notif_group)
+
+        self._notif_recognition = QCheckBox("识别成功时显示通知")
+        self._notif_paste = QCheckBox("粘贴成功时显示通知")
+        self._notif_error = QCheckBox("出现错误时显示通知")
+
+        notif_layout.addWidget(self._notif_recognition)
+        notif_layout.addWidget(self._notif_paste)
+        notif_layout.addWidget(self._notif_error)
+
+        outer.addWidget(notif_group)
         outer.addStretch()
         return container
 
@@ -235,6 +270,243 @@ class SettingsUI(QDialog):
         outer.addWidget(group)
         outer.addStretch()
         return container
+
+    def _build_templates_tab(self) -> QWidget:
+        container = QWidget()
+        outer = QVBoxLayout(container)
+        outer.setContentsMargins(8, 8, 8, 8)
+
+        # Splitter: list on left, editor on right
+        splitter = QSplitter(Qt.Orientation.Horizontal)
+
+        # Left side: template list
+        left_widget = QWidget()
+        left_layout = QVBoxLayout(left_widget)
+        left_layout.setContentsMargins(0, 0, 0, 0)
+
+        self._template_list = QListWidget()
+        self._template_list.currentRowChanged.connect(self._on_template_selection_changed)
+        left_layout.addWidget(self._template_list)
+
+        # Buttons below the list
+        btn_row = QHBoxLayout()
+        self._add_template_btn = QPushButton("添加")
+        self._add_template_btn.clicked.connect(self._add_custom_template)
+        self._rename_template_btn = QPushButton("重命名")
+        self._rename_template_btn.clicked.connect(self._rename_custom_template)
+        self._delete_template_btn = QPushButton("删除")
+        self._delete_template_btn.clicked.connect(self._delete_custom_template)
+        btn_row.addWidget(self._add_template_btn)
+        btn_row.addWidget(self._rename_template_btn)
+        btn_row.addWidget(self._delete_template_btn)
+        left_layout.addLayout(btn_row)
+
+        splitter.addWidget(left_widget)
+
+        # Right side: prompt editor
+        right_widget = QWidget()
+        right_layout = QVBoxLayout(right_widget)
+        right_layout.setContentsMargins(0, 0, 0, 0)
+
+        self._template_editor = QPlainTextEdit()
+        self._template_editor.setPlaceholderText("选择模板以查看/编辑提示词内容...")
+        right_layout.addWidget(self._template_editor)
+
+        # "Set as current" row
+        current_row = QHBoxLayout()
+        self._set_current_btn = QPushButton("设为当前")
+        self._set_current_btn.clicked.connect(self._set_template_as_current)
+        self._current_template_label = QLabel("当前: 智能识别")
+        current_row.addWidget(self._set_current_btn)
+        current_row.addWidget(self._current_template_label)
+        current_row.addStretch()
+        right_layout.addLayout(current_row)
+
+        splitter.addWidget(right_widget)
+        splitter.setSizes([200, 400])
+
+        outer.addWidget(splitter)
+        return container
+
+    # ------------------------------------------------------------------
+    # Template management slots
+    # ------------------------------------------------------------------
+
+    def _populate_template_list(self) -> None:
+        """Refresh the template list widget from internal state."""
+        self._template_list.blockSignals(True)
+        current_row = self._template_list.currentRow()
+        self._template_list.clear()
+
+        for name in _PRESET_TEMPLATE_NAMES:
+            item = QListWidgetItem(f"\U0001f512 {name}")
+            item.setData(Qt.ItemDataRole.UserRole, name)
+            self._template_list.addItem(item)
+
+        for t in self._custom_templates:
+            item = QListWidgetItem(t["name"])
+            item.setData(Qt.ItemDataRole.UserRole, t["name"])
+            self._template_list.addItem(item)
+
+        # Restore selection
+        if 0 <= current_row < self._template_list.count():
+            self._template_list.setCurrentRow(current_row)
+        elif self._template_list.count() > 0:
+            self._template_list.setCurrentRow(0)
+
+        self._template_list.blockSignals(False)
+        self._update_template_buttons()
+
+    def _on_template_selection_changed(self, row: int) -> None:
+        """Handle template list selection change."""
+        # Save current editor content to previously selected custom template
+        self._save_editor_to_current_custom()
+
+        if row < 0 or row >= self._template_list.count():
+            return
+
+        item = self._template_list.item(row)
+        name = item.data(Qt.ItemDataRole.UserRole)
+
+        if name in _PRESET_TEMPLATE_NAMES:
+            # Preset: load from file, read-only
+            file_name = _PRESET_TEMPLATE_FILES[name]
+            path = _PROMPTS_DIR / file_name
+            try:
+                content = path.read_text(encoding="utf-8")
+            except OSError:
+                content = f"(无法读取预设模板文件: {file_name})"
+            self._template_editor.setPlainText(content)
+            self._template_editor.setReadOnly(True)
+        else:
+            # Custom: load from memory, editable
+            for t in self._custom_templates:
+                if t["name"] == name:
+                    self._template_editor.setPlainText(t["prompt"])
+                    break
+            self._template_editor.setReadOnly(False)
+
+        self._update_template_buttons()
+        self._prev_selected_name = name
+
+    def _save_editor_to_current_custom(self) -> None:
+        """Save current editor content back to the in-memory custom template."""
+        if not hasattr(self, "_prev_selected_name"):
+            return
+        prev = self._prev_selected_name
+        if prev in _PRESET_TEMPLATE_NAMES:
+            return
+        content = self._template_editor.toPlainText()
+        for t in self._custom_templates:
+            if t["name"] == prev:
+                t["prompt"] = content
+                break
+
+    def _update_template_buttons(self) -> None:
+        """Enable/disable buttons based on current selection."""
+        row = self._template_list.currentRow()
+        is_preset = row < len(_PRESET_TEMPLATE_NAMES)
+        has_selection = row >= 0
+
+        self._rename_template_btn.setEnabled(has_selection and not is_preset)
+        self._delete_template_btn.setEnabled(has_selection and not is_preset)
+        self._set_current_btn.setEnabled(has_selection)
+        self._add_template_btn.setEnabled(
+            len(self._custom_templates) < _MAX_CUSTOM_TEMPLATES
+        )
+
+    def _get_all_template_names(self) -> list[str]:
+        """Return all template names (preset + custom)."""
+        return list(_PRESET_TEMPLATE_NAMES) + [t["name"] for t in self._custom_templates]
+
+    def _add_custom_template(self) -> None:
+        if len(self._custom_templates) >= _MAX_CUSTOM_TEMPLATES:
+            QMessageBox.warning(self, "数量限制", f"自定义模板最多 {_MAX_CUSTOM_TEMPLATES} 个。")
+            return
+
+        name, ok = QInputDialog.getText(self, "新建模板", "请输入模板名称:")
+        if not ok or not name.strip():
+            return
+        name = name.strip()
+
+        if name in self._get_all_template_names():
+            QMessageBox.warning(self, "名称冲突", f"模板名称 \"{name}\" 已存在。")
+            return
+
+        self._save_editor_to_current_custom()
+        self._custom_templates.append({
+            "name": name,
+            "prompt": "You are a recognition assistant.\n\nAnalyze the provided image and output the recognized content.",
+        })
+        self._populate_template_list()
+        # Select the new template
+        self._template_list.setCurrentRow(self._template_list.count() - 1)
+
+    def _rename_custom_template(self) -> None:
+        row = self._template_list.currentRow()
+        if row < len(_PRESET_TEMPLATE_NAMES):
+            return
+
+        idx = row - len(_PRESET_TEMPLATE_NAMES)
+        old_name = self._custom_templates[idx]["name"]
+
+        new_name, ok = QInputDialog.getText(self, "重命名模板", "请输入新名称:", text=old_name)
+        if not ok or not new_name.strip():
+            return
+        new_name = new_name.strip()
+
+        if new_name == old_name:
+            return
+
+        if new_name in self._get_all_template_names():
+            QMessageBox.warning(self, "名称冲突", f"模板名称 \"{new_name}\" 已存在。")
+            return
+
+        self._custom_templates[idx]["name"] = new_name
+
+        # If the renamed template was the current one, update
+        if self._current_template == old_name:
+            self._current_template = new_name
+            self._current_template_label.setText(f"当前: {new_name}")
+
+        self._prev_selected_name = new_name
+        self._populate_template_list()
+        self._template_list.setCurrentRow(row)
+
+    def _delete_custom_template(self) -> None:
+        row = self._template_list.currentRow()
+        if row < len(_PRESET_TEMPLATE_NAMES):
+            return
+
+        idx = row - len(_PRESET_TEMPLATE_NAMES)
+        name = self._custom_templates[idx]["name"]
+
+        reply = QMessageBox.question(
+            self, "确认删除", f"确定要删除模板 \"{name}\" 吗？",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        )
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+
+        self._custom_templates.pop(idx)
+
+        # If deleted template was the current one, reset to default
+        if self._current_template == name:
+            self._current_template = "智能识别"
+            self._current_template_label.setText("当前: 智能识别")
+
+        self._prev_selected_name = ""
+        self._populate_template_list()
+
+    def _set_template_as_current(self) -> None:
+        row = self._template_list.currentRow()
+        if row < 0:
+            return
+
+        item = self._template_list.item(row)
+        name = item.data(Qt.ItemDataRole.UserRole)
+        self._current_template = name
+        self._current_template_label.setText(f"当前: {name}")
 
     def _build_button_bar(self) -> QWidget:
         container = QWidget()
@@ -279,12 +551,35 @@ class SettingsUI(QDialog):
             bool(self._config.get("general.auto_update", True))
         )
 
+        # Notification toggles
+        self._notif_recognition.setChecked(
+            bool(self._config.get("notifications.recognition_success", True))
+        )
+        self._notif_paste.setChecked(
+            bool(self._config.get("notifications.paste_success", False))
+        )
+        self._notif_error.setChecked(
+            bool(self._config.get("notifications.error", True))
+        )
+
         self._screenshot_key_edit.setText(
             self._config.get("hotkeys.screenshot", "ctrl+shift+a")
         )
         self._paste_key_edit.setText(
             self._config.get("hotkeys.paste", "ctrl+shift+v")
         )
+
+        # Templates
+        self._current_template = self._config.get("templates.current", "智能识别")
+        raw_custom = self._config.get("templates.custom", [])
+        self._custom_templates = [
+            {"name": t.get("name", ""), "prompt": t.get("prompt", "")}
+            for t in raw_custom
+            if isinstance(t, dict) and t.get("name")
+        ]
+        self._prev_selected_name = ""
+        self._current_template_label.setText(f"当前: {self._current_template}")
+        self._populate_template_list()
 
         logger.info("Settings loaded into dialog.")
 
@@ -297,8 +592,19 @@ class SettingsUI(QDialog):
         self._config.set("api.retries", self._retries_spin.value())
         self._config.set("general.pandoc_path", self._pandoc_edit.text().strip())
         self._config.set("general.auto_update", self._auto_update_check.isChecked())
+
+        # Notification toggles
+        self._config.set("notifications.recognition_success", self._notif_recognition.isChecked())
+        self._config.set("notifications.paste_success", self._notif_paste.isChecked())
+        self._config.set("notifications.error", self._notif_error.isChecked())
+
         self._config.set("hotkeys.screenshot", self._screenshot_key_edit.text().strip())
         self._config.set("hotkeys.paste", self._paste_key_edit.text().strip())
+
+        # Templates — save editor content for current custom template first
+        self._save_editor_to_current_custom()
+        self._config.set("templates.current", self._current_template)
+        self._config.set("templates.custom", self._custom_templates)
 
         logger.info("Settings saved.")
 
