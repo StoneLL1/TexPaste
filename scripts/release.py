@@ -59,6 +59,10 @@ def main() -> None:
     # Run full build
     subprocess.run([sys.executable, str(ROOT / "scripts" / "build.py")], cwd=ROOT, check=True)
 
+    # Build installer
+    print("\nBuilding Windows installer...")
+    subprocess.run([sys.executable, str(ROOT / "scripts" / "build_installer.py")], cwd=ROOT, check=False)
+
     # Git tag
     subprocess.run(["git", "add", str(PYPROJECT), str(DEFAULT_CONFIG)], cwd=ROOT, check=True)
     subprocess.run(["git", "commit", "-m", f"chore: release v{new_version}"], cwd=ROOT, check=True)
