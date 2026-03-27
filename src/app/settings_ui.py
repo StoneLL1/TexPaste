@@ -4,7 +4,7 @@ from pathlib import Path
 
 import httpx
 from PyQt6.QtCore import QObject, QThread, pyqtSignal as Signal, Qt
-from PyQt6.QtGui import QColor, QIcon, QPainter, QPen, QPixmap
+from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -80,6 +80,10 @@ _PRESET_TEMPLATE_FILES: dict[str, str] = {
 }
 
 _MAX_CUSTOM_TEMPLATES = 10
+
+# 资源路径
+_ICONS_DIR = Path(__file__).parent.parent / "resources" / "icons"
+_CHECKMARK_ICON_PATH = str(_ICONS_DIR / "checkmark.png")
 
 # 黑白灰配色常量
 _COLOR_PRIMARY_BG = "#FFFFFF"
@@ -209,6 +213,7 @@ QCheckBox::indicator {{
 QCheckBox::indicator:checked {{
     background-color: {_COLOR_PRIMARY_BG};
     border: 1px solid {_COLOR_TEXT_PRIMARY};
+    image: url({_CHECKMARK_ICON_PATH.replace(chr(92), '/')});
 }}
 
 QListWidget {{
@@ -385,29 +390,6 @@ class SettingsUI(QDialog):
         self._tabs.addTab(self._build_templates_tab(), "模板")
 
         root_layout.addWidget(self._build_button_bar())
-
-        # Set checkmark icons for checkboxes
-        self._setup_checkbox_icons()
-
-    def _setup_checkbox_icons(self) -> None:
-        """Set checkmark icons for all QCheckBox widgets."""
-        # Create checkmark pixmap
-        pixmap = QPixmap(16, 16)
-        pixmap.fill(Qt.GlobalColor.transparent)
-        painter = QPainter(pixmap)
-        painter.setPen(QPen(QColor("#333333"), 2))
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        # Draw checkmark: (4,8) -> (8,12) -> (15,5)
-        painter.drawLine(4, 8, 8, 12)
-        painter.drawLine(8, 12, 15, 5)
-        painter.end()
-        icon = QIcon(pixmap)
-
-        # Apply to notification checkboxes
-        self._notif_recognition.setIcon(icon)
-        self._notif_paste.setIcon(icon)
-        self._notif_error.setIcon(icon)
-        self._auto_update_check.setIcon(icon)
 
     def _build_api_tab(self) -> QWidget:
         container = QWidget()
