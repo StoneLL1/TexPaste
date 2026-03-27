@@ -22,6 +22,7 @@ from models.enums import ContentType
         ("Some **bold** text", ContentType.MARKDOWN),
         (r"\begin{pmatrix} a & b \end{pmatrix}", ContentType.PURE_LATEX),
         ("plain text with no special chars", ContentType.PLAIN_TEXT),
+        ("| Variable | Value |\n|----------|-------|\n| x | 3.14 |", ContentType.MARKDOWN),
     ],
 )
 def test_detect_content_type(text: str, expected: ContentType) -> None:

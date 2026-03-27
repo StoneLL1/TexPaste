@@ -19,7 +19,7 @@ def detect_content_type(text: str) -> ContentType:
     """
     has_inline_formula: bool = bool(re.search(r"\$.+?\$", text))
     has_display_formula: bool = bool(re.search(r"\$\$.+?\$\$", text, re.DOTALL))
-    has_markdown_syntax: bool = bool(re.search(r"[#*`\[\]]", text))
+    has_markdown_syntax: bool = bool(re.search(r"[#*`\[\]\|]", text))
     looks_like_latex: bool = bool(re.search(r"\\[a-zA-Z]+\{", text))
 
     if has_inline_formula or has_display_formula or has_markdown_syntax:

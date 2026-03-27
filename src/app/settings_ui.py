@@ -4,6 +4,7 @@ from pathlib import Path
 
 import httpx
 from PyQt6.QtCore import QObject, QThread, pyqtSignal as Signal, Qt
+from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -122,6 +123,7 @@ class SettingsUI(QDialog):
         self.setWindowTitle("TexPaste 设置")
         self.setMinimumSize(640, 480)
         self.setModal(True)
+        self.setWindowIcon(self._load_icon())
 
         root_layout = QVBoxLayout(self)
         root_layout.setContentsMargins(12, 12, 12, 12)
@@ -671,3 +673,11 @@ class SettingsUI(QDialog):
     def _reset_test_btn(self) -> None:
         self._test_btn.setEnabled(True)
         self._test_btn.setText("测试连接")
+
+    @staticmethod
+    def _load_icon() -> QIcon:
+        """Load the TexPaste window icon."""
+        icon_path = Path(__file__).parent.parent / "resources" / "icons" / "texpaste.ico"
+        if icon_path.exists():
+            return QIcon(str(icon_path))
+        return QIcon()
