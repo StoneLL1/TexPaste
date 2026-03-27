@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from PyQt6.QtCore import QTimer, Qt
+from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
     QDialog,
     QHBoxLayout,
@@ -56,6 +59,7 @@ class HistoryUI(QDialog):
         self.setWindowTitle("TexPaste 历史记录")
         self.setMinimumSize(600, 400)
         self.resize(800, 500)
+        self.setWindowIcon(self._load_icon())
 
         root_layout = QVBoxLayout(self)
         root_layout.setContentsMargins(8, 8, 8, 8)
@@ -190,3 +194,11 @@ class HistoryUI(QDialog):
     def _on_search_timer_fired(self) -> None:
         """Execute the debounced search."""
         self._load_history(self._search_edit.text())
+
+    @staticmethod
+    def _load_icon() -> QIcon:
+        """Load the TexPaste window icon."""
+        icon_path = Path(__file__).parent.parent / "resources" / "icons" / "texpaste.ico"
+        if icon_path.exists():
+            return QIcon(str(icon_path))
+        return QIcon()
