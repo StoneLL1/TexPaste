@@ -207,8 +207,9 @@ QCheckBox::indicator {{
 }}
 
 QCheckBox::indicator:checked {{
-    background-color: {_COLOR_TEXT_PRIMARY};
+    background-color: {_COLOR_PRIMARY_BG};
     border: 1px solid {_COLOR_TEXT_PRIMARY};
+    image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDE2IDE2Ij48cG9seWxpbmUgcG9pbnRzPSI0LDggOCwxMiAxNSw1IiBzdHJva2U9IiMzMzMiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PC9zdmc+);
 }}
 
 QListWidget {{
