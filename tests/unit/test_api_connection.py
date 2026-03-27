@@ -8,7 +8,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 import pytest
 
-from app.settings_ui import _ConnectionWorker
+from app.settings_ui import _ConnectionWorker, _get_connection_error_message
 
 
 @pytest.fixture
@@ -79,7 +79,7 @@ def test_connection_worker_failure_on_404(qapp, mock_httpx_response):
         worker.run()
 
         assert len(failure_signals) == 1, "Failure signal should have been emitted for 404 status"
-        assert "404" in failure_signals[0]
+        assert "URL" in failure_signals[0] or "端点" in failure_signals[0]
 
 
 def test_connection_worker_failure_on_401(qapp, mock_httpx_response):
@@ -105,7 +105,7 @@ def test_connection_worker_failure_on_401(qapp, mock_httpx_response):
         worker.run()
 
         assert len(failure_signals) == 1, "Failure signal should have been emitted for 401 status"
-        assert "401" in failure_signals[0]
+        assert "API Key" in failure_signals[0]
 
 
 def test_connection_worker_failure_on_500(qapp, mock_httpx_response):
@@ -131,7 +131,7 @@ def test_connection_worker_failure_on_500(qapp, mock_httpx_response):
         worker.run()
 
         assert len(failure_signals) == 1, "Failure signal should have been emitted for 500 status"
-        assert "500" in failure_signals[0]
+        assert "服务器" in failure_signals[0] or "Server" in failure_signals[0]
 
 
 def test_connection_worker_success_on_201(qapp, mock_httpx_response):
@@ -189,3 +189,46 @@ def test_connection_worker_model_validation_on_post(qapp, mock_httpx_response):
         assert call_args[1]["json"]["model"] == "gpt-4o"
 
         assert len(success_signals) == 1
+
+
+def test_error_message_on_401_api_key_invalid():
+    """Test 401 error shows API Key hint."""
+    msg = _get_connection_error_message(401, "", "https://api.example.com")
+    assert "API Key" in msg
+    assert "❌" in msg
+
+
+def test_error_message_on_404_without_model():
+    """Test 404 error without model shows URL hint."""
+    msg = _get_connection_error_message(404, "", "https://api.example.com")
+    assert "URL" in msg or "端点" in msg
+    assert "❌" in msg
+
+
+def test_error_message_on_404_with_model():
+    """Test 404 error with model shows model name hint."""
+    msg = _get_connection_error_message(404, "gpt-4o", "https://api.example.com")
+    assert "gpt-4o" in msg
+    assert "模型" in msg
+    assert "❌" in msg
+
+
+def test_error_message_on_400_with_model():
+    """Test 400 error with model shows model compatibility hint."""
+    msg = _get_connection_error_message(400, "invalid-model", "https://api.example.com")
+    assert "invalid-model" in msg
+    assert "❌" in msg
+
+
+def test_error_message_on_403():
+    """Test 403 error shows permission hint."""
+    msg = _get_connection_error_message(403, "", "https://api.example.com")
+    assert "权限" in msg or "Permission" in msg or "无权" in msg
+    assert "❌" in msg
+
+
+def test_error_message_on_500():
+    """Test 500 error shows server problem hint."""
+    msg = _get_connection_error_message(500, "", "https://api.example.com")
+    assert "服务器" in msg or "Server" in msg
+    assert "❌" in msg

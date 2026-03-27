@@ -35,6 +35,39 @@ from utils.logger import get_logger
 
 logger = get_logger(__name__)
 
+
+def _get_connection_error_message(
+    status_code: int, model: str, endpoint: str
+) -> str:
+    """Convert HTTP status code and context to user-friendly error message.
+
+    Args:
+        status_code: HTTP response status code
+        model: Model name being tested (empty string if not testing a model)
+        endpoint: API endpoint URL
+
+    Returns:
+        User-friendly error message with diagnostic hints
+    """
+    if status_code == 401:
+        return "❌ API Key 无效或缺失，请检查 API Key。"
+    elif status_code == 404:
+        if model:
+            return f"❌ 模型 '{model}' 不存在或 API 端点不正确。请检查：\n① 模型名称是否正确\n② API URL 是否完整"
+        else:
+            return "❌ API 端点不存在。请检查：\n① API URL 地址是否正确\n② URL 是否以 /v1 结尾"
+    elif status_code == 400:
+        if model:
+            return f"❌ 模型 '{model}' 可能不支持或请求格式错误。请检查：\n① 模型名称拼写\n② API 是否支持此模型"
+        else:
+            return "❌ 请求格式错误。请检查 API 配置。"
+    elif status_code == 403:
+        return "❌ 无权限访问此 API。请检查 API Key 是否有必要的权限。"
+    elif status_code >= 500:
+        return f"❌ API 服务器出现问题 (HTTP {status_code})。请稍后重试或联系 API 提供商。"
+    else:
+        return f"❌ 连接失败 (HTTP {status_code})。请检查 API 配置。"
+
 _PROMPTS_DIR = Path(__file__).parent.parent / "resources" / "prompts"
 
 _PRESET_TEMPLATE_NAMES: list[str] = ["智能识别", "纯LaTeX", "纯Markdown", "纯文本"]
@@ -104,9 +137,10 @@ class _ConnectionWorker(QObject):
             if response.is_success:
                 self.succeeded.emit()
             else:
-                self.failed.emit(
-                    f"服务器返回错误状态码：{response.status_code}"
+                error_msg = _get_connection_error_message(
+                    response.status_code, self._model, self._endpoint
                 )
+                self.failed.emit(error_msg)
         except httpx.TimeoutException:
             self._logger.error("API connection timeout")
             self.failed.emit("连接超时，请检查 API 地址或网络。")
