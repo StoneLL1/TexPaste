@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import webbrowser
 from pathlib import Path
 
 import httpx
@@ -32,6 +33,7 @@ from PyQt6.QtWidgets import (
 
 from utils.config import ConfigManager
 from utils.logger import get_logger
+from utils.updater import UpdateChecker
 
 logger = get_logger(__name__)
 
@@ -388,6 +390,7 @@ class SettingsUI(QDialog):
         self._tabs.addTab(self._build_general_tab(), "通用")
         self._tabs.addTab(self._build_hotkeys_tab(), "快捷键")
         self._tabs.addTab(self._build_templates_tab(), "模板")
+        self._tabs.addTab(self._build_about_tab(), "关于")
 
         root_layout.addWidget(self._build_button_bar())
 
@@ -934,3 +937,85 @@ class SettingsUI(QDialog):
         if icon_path.exists():
             return QIcon(str(icon_path))
         return QIcon()
+
+    # ------------------------------------------------------------------
+    # About tab
+    # ------------------------------------------------------------------
+
+    def _build_about_tab(self) -> QWidget:
+        """Build the About tab with version info, update check, and links."""
+        container = QWidget()
+        outer = QVBoxLayout(container)
+        outer.setContentsMargins(8, 8, 8, 8)
+
+        # Version info group
+        version_group = QGroupBox("版本信息")
+        version_layout = QVBoxLayout(version_group)
+
+        current_version = self._config.get("version", "1.0.0")
+        self._version_label = QLabel(f"当前版本: {current_version}")
+        version_layout.addWidget(self._version_label)
+
+        # Check update button
+        self._check_update_btn = QPushButton("检查更新")
+        self._check_update_btn.setSizePolicy(
+            QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed
+        )
+        self._check_update_btn.clicked.connect(self._check_for_update)
+        version_layout.addWidget(self._check_update_btn)
+
+        outer.addWidget(version_group)
+
+        # Author info group
+        author_group = QGroupBox("作者")
+        author_layout = QVBoxLayout(author_group)
+        author_layout.addWidget(QLabel("StoneLL1"))
+        outer.addWidget(author_group)
+
+        # Links group
+        links_group = QGroupBox("链接")
+        links_layout = QVBoxLayout(links_group)
+
+        github_btn = QPushButton("GitHub 仓库")
+        github_btn.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        github_btn.clicked.connect(self._open_github)
+        links_layout.addWidget(github_btn)
+
+        outer.addWidget(links_group)
+        outer.addStretch()
+        return container
+
+    def _check_for_update(self) -> None:
+        """Trigger a manual update check."""
+        self._check_update_btn.setEnabled(False)
+        self._check_update_btn.setText("检查中...")
+
+        self._update_checker = UpdateChecker(self._config, self)
+        self._update_checker.update_available.connect(self._on_update_available)
+        self._update_checker.check_once()
+
+        # Reset button after a delay (UpdateChecker doesn't have a "no update" signal)
+        # We'll use a timer to reset the button state
+        from PyQt6.QtCore import QTimer
+        QTimer.singleShot(3000, self._reset_update_btn)
+
+    def _on_update_available(self, latest_version: str, download_url: str) -> None:
+        """Handle update available notification."""
+        self._reset_update_btn()
+        reply = QMessageBox.question(
+            self,
+            "发现新版本",
+            f"新版本 {latest_version} 已发布。\n\n是否打开下载页面？",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        )
+        if reply == QMessageBox.StandardButton.Yes:
+            webbrowser.open(download_url)
+
+    def _reset_update_btn(self) -> None:
+        """Reset the update check button to its default state."""
+        self._check_update_btn.setEnabled(True)
+        self._check_update_btn.setText("检查更新")
+
+    def _open_github(self) -> None:
+        """Open the GitHub repository page in the default browser."""
+        webbrowser.open("https://github.com/StoneLL1/TexPaste")
