@@ -209,6 +209,20 @@ A: 在 `TexPaste.exe` 同级目录创建名为 `.portable` 的空文件，数据
 
 [MIT License](LICENSE)
 
+## 贡献者
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/StoneLL1">
+        <img src="https://github.com/StoneLL1.png?size=100" width="100px;" alt="StoneLL1"/>
+        <br />
+        <sub><b>StoneLL1</b></sub>
+      </a>
+    </td>
+  </tr>
+</table>
+
 ## 致谢
 
 - [pastemd](https://github.com/euclidean-dreams/pastemd) - Word 粘贴实现参考
