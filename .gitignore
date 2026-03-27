@@ -13,3 +13,15 @@ __pycache__/
 .ruff_cache/
 *.egg-info/
 .pytest_cache/
+
+# Test files - not needed for release
+tests/
+
+# IDE
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.temp
+.codepilot-uploads/
