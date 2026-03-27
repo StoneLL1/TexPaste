@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -60,6 +61,11 @@ class PandocConverter:
             md_path = Path(md_file.name)
 
         docx_path = md_path.with_suffix(".docx")
+        # Hide console window on Windows
+        creationflags = 0
+        if sys.platform == "win32":
+            creationflags = subprocess.CREATE_NO_WINDOW
+
         try:
             result = subprocess.run(
                 [
@@ -73,6 +79,7 @@ class PandocConverter:
                 ],
                 capture_output=True,
                 text=True,
+                creationflags=creationflags,
             )
         finally:
             md_path.unlink(missing_ok=True)

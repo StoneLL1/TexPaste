@@ -63,6 +63,8 @@ english.LaunchProgram=Launch TexPaste
 [Files]
 ; Main executable
 Source: "..\dist\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+; Shortcut icon (white background for better visibility on Windows)
+Source: "..\src\resources\icons\texpaste_quick.ico"; DestDir: "{app}"; Flags: ignoreversion
 
 ; Pandoc MSI (conditional - only if not detected)
 Source: "pandoc\pandoc-*-windows-x86_64.msi"; DestDir: "{tmp}"; Flags: deleteafterinstall; Check: not IsPandocInstalled
@@ -72,11 +74,11 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Name: "autostart"; Description: "{cm:AutoStart}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Icons]
-Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
+Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\texpaste_quick.ico"
 Name: "{group}\{cm:ProgramOnTheWeb,{#MyAppName}}"; Filename: "{#MyAppURL}"
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
-Name: "{userappdata}\Microsoft\Windows\Start Menu\Programs\Startup\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: autostart
+Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\texpaste_quick.ico"; Tasks: desktopicon
+Name: "{userappdata}\Microsoft\Windows\Start Menu\Programs\Startup\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\texpaste_quick.ico"; Tasks: autostart
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#MyAppName}}"; Flags: nowait postinstall skipifsilent
