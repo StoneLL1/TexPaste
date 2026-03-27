@@ -10,11 +10,20 @@ _src_dir = Path(__file__).parent
 if str(_src_dir) not in sys.path:
     sys.path.insert(0, str(_src_dir))
 
+from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication, QMessageBox  # noqa: E402
 
 from utils.logger import get_app_data_dir, setup_logger  # noqa: E402
 from utils.config import ConfigManager  # noqa: E402
 from utils.startup import StartupChecker  # noqa: E402
+
+
+def _load_app_icon() -> QIcon:
+    """Load the TexPaste application icon."""
+    icon_path = Path(__file__).parent / "resources" / "icons" / "texpaste.ico"
+    if icon_path.exists():
+        return QIcon(str(icon_path))
+    return QIcon()
 
 
 def _show_fatal_error(title: str, message: str) -> None:
@@ -32,6 +41,7 @@ def main() -> None:
     app.setApplicationName("TexPaste")
     app.setApplicationVersion("1.0.0")
     app.setOrganizationName("TexPaste")
+    app.setWindowIcon(_load_app_icon())
     # Tray-only app — don't quit when all windows are closed
     app.setQuitOnLastWindowClosed(False)
 
