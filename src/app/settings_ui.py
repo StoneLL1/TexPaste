@@ -67,6 +67,7 @@ class _ConnectionWorker(QObject):
         self._endpoint = endpoint.rstrip("/")
         self._api_key = api_key
         self._timeout = timeout
+        self._logger = get_logger("settings.connection_worker")
 
     def run(self) -> None:
         try:
@@ -77,19 +78,24 @@ class _ConnectionWorker(QObject):
             # Hit the /models endpoint as a lightweight connectivity check;
             # fall back to the base URL if the path yields a 404.
             test_url = f"{self._endpoint}/models"
+            self._logger.debug("Testing API connection: %s", test_url)
             with httpx.Client(timeout=self._timeout) as client:
                 response = client.get(test_url, headers=headers)
-            if response.status_code < 500:
+            self._logger.debug("API response status: %d", response.status_code)
+            if response.is_success:
                 self.succeeded.emit()
             else:
                 self.failed.emit(
                     f"服务器返回错误状态码：{response.status_code}"
                 )
         except httpx.TimeoutException:
+            self._logger.error("API connection timeout")
             self.failed.emit("连接超时，请检查 API 地址或网络。")
         except httpx.RequestError as exc:
+            self._logger.error("API connection error: %s", exc)
             self.failed.emit(str(exc))
         except Exception as exc:  # noqa: BLE001
+            self._logger.error("Unexpected error during API test: %s", exc)
             self.failed.emit(str(exc))
 
 
