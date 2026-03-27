@@ -42,7 +42,10 @@ def test_connection_worker_success_on_200(qapp, mock_httpx_response):
         )
 
         worker = _ConnectionWorker(
-            endpoint="https://api.example.com", api_key="test", timeout=10
+            endpoint="https://api.example.com",
+            api_key="test",
+            timeout=10,
+            model="",
         )
 
         success_signals = []
@@ -64,7 +67,10 @@ def test_connection_worker_failure_on_404(qapp, mock_httpx_response):
         )
 
         worker = _ConnectionWorker(
-            endpoint="https://api.example.com", api_key="test", timeout=10
+            endpoint="https://api.example.com",
+            api_key="test",
+            timeout=10,
+            model="",
         )
 
         failure_signals = []
@@ -87,7 +93,10 @@ def test_connection_worker_failure_on_401(qapp, mock_httpx_response):
         )
 
         worker = _ConnectionWorker(
-            endpoint="https://api.example.com", api_key="wrong_key", timeout=10
+            endpoint="https://api.example.com",
+            api_key="wrong_key",
+            timeout=10,
+            model="",
         )
 
         failure_signals = []
@@ -110,7 +119,10 @@ def test_connection_worker_failure_on_500(qapp, mock_httpx_response):
         )
 
         worker = _ConnectionWorker(
-            endpoint="https://api.example.com", api_key="test", timeout=10
+            endpoint="https://api.example.com",
+            api_key="test",
+            timeout=10,
+            model="",
         )
 
         failure_signals = []
@@ -133,7 +145,10 @@ def test_connection_worker_success_on_201(qapp, mock_httpx_response):
         )
 
         worker = _ConnectionWorker(
-            endpoint="https://api.example.com", api_key="test", timeout=10
+            endpoint="https://api.example.com",
+            api_key="test",
+            timeout=10,
+            model="",
         )
 
         success_signals = []
@@ -142,3 +157,35 @@ def test_connection_worker_success_on_201(qapp, mock_httpx_response):
         worker.run()
 
         assert len(success_signals) == 1, "Success signal should have been emitted for 201 status"
+
+
+def test_connection_worker_model_validation_on_post(qapp, mock_httpx_response):
+    """Test that when model is provided, a POST request is made to /chat/completions."""
+    mock_httpx_response.is_success = True
+    mock_httpx_response.status_code = 200
+
+    with patch("httpx.Client") as mock_client:
+        # Mock both GET and POST methods
+        mock_instance = MagicMock()
+        mock_instance.__enter__.return_value.post.return_value = mock_httpx_response
+        mock_client.return_value = mock_instance
+
+        worker = _ConnectionWorker(
+            endpoint="https://api.example.com",
+            api_key="test-key",
+            timeout=10,
+            model="gpt-4o",
+        )
+
+        success_signals = []
+        worker.succeeded.connect(lambda: success_signals.append(True))
+
+        worker.run()
+
+        # Verify POST was called
+        mock_instance.__enter__.return_value.post.assert_called_once()
+        call_args = mock_instance.__enter__.return_value.post.call_args
+        assert "/chat/completions" in call_args[0][0]
+        assert call_args[1]["json"]["model"] == "gpt-4o"
+
+        assert len(success_signals) == 1

@@ -62,11 +62,14 @@ class _ConnectionWorker(QObject):
     succeeded = Signal()
     failed = Signal(str)
 
-    def __init__(self, endpoint: str, api_key: str, timeout: int) -> None:
+    def __init__(
+        self, endpoint: str, api_key: str, timeout: int, model: str = ""
+    ) -> None:
         super().__init__()
         self._endpoint = endpoint.rstrip("/")
         self._api_key = api_key
         self._timeout = timeout
+        self._model = model
         self._logger = get_logger("settings.connection_worker")
 
     def run(self) -> None:
@@ -75,12 +78,28 @@ class _ConnectionWorker(QObject):
             if self._api_key:
                 headers["Authorization"] = f"Bearer {self._api_key}"
 
-            # Hit the /models endpoint as a lightweight connectivity check;
-            # fall back to the base URL if the path yields a 404.
-            test_url = f"{self._endpoint}/models"
-            self._logger.debug("Testing API connection: %s", test_url)
-            with httpx.Client(timeout=self._timeout) as client:
-                response = client.get(test_url, headers=headers)
+            # If model is specified, test it directly by sending a minimal request.
+            # Otherwise, test the /models endpoint as a lightweight connectivity check.
+            if self._model:
+                test_url = f"{self._endpoint}/chat/completions"
+                self._logger.debug(
+                    "Testing API connection with model: %s at %s", self._model, test_url
+                )
+                payload = {
+                    "model": self._model,
+                    "messages": [{"role": "user", "content": "test"}],
+                    "max_tokens": 1,
+                }
+                with httpx.Client(timeout=self._timeout) as client:
+                    response = client.post(
+                        test_url, json=payload, headers=headers
+                    )
+            else:
+                test_url = f"{self._endpoint}/models"
+                self._logger.debug("Testing API connection: %s", test_url)
+                with httpx.Client(timeout=self._timeout) as client:
+                    response = client.get(test_url, headers=headers)
+
             self._logger.debug("API response status: %d", response.status_code)
             if response.is_success:
                 self.succeeded.emit()
@@ -654,6 +673,7 @@ class SettingsUI(QDialog):
             endpoint=endpoint,
             api_key=self._api_key_edit.text(),
             timeout=self._timeout_spin.value(),
+            model=self._model_combo.currentText().strip(),
         )
         self._worker.moveToThread(self._thread)
 
