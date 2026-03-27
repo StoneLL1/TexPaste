@@ -81,6 +81,193 @@ _PRESET_TEMPLATE_FILES: dict[str, str] = {
 
 _MAX_CUSTOM_TEMPLATES = 10
 
+# 黑白灰配色常量
+_COLOR_PRIMARY_BG = "#FFFFFF"
+_COLOR_SECONDARY_BG = "#F5F5F5"
+_COLOR_TERTIARY_BG = "#EEEEEE"
+_COLOR_TEXT_PRIMARY = "#333333"
+_COLOR_TEXT_SECONDARY = "#666666"
+_COLOR_BORDER = "#E0E0E0"
+_COLOR_BUTTON_BG = "#F0F0F0"
+_COLOR_BUTTON_HOVER = "#E0E0E0"
+_COLOR_SELECTED = "#DDDDDD"
+
+# 样式表
+_MAIN_STYLESHEET = f"""
+QDialog {{
+    background-color: {_COLOR_PRIMARY_BG};
+    color: {_COLOR_TEXT_PRIMARY};
+    font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
+    font-size: 13px;
+}}
+
+QTabWidget::pane {{
+    border: 1px solid {_COLOR_BORDER};
+    background-color: {_COLOR_PRIMARY_BG};
+}}
+
+QTabBar::tab {{
+    background-color: {_COLOR_SECONDARY_BG};
+    color: {_COLOR_TEXT_SECONDARY};
+    padding: 8px 16px;
+    border: 1px solid {_COLOR_BORDER};
+    border-bottom: none;
+    margin-right: 2px;
+}}
+
+QTabBar::tab:selected {{
+    background-color: {_COLOR_PRIMARY_BG};
+    color: {_COLOR_TEXT_PRIMARY};
+    font-weight: bold;
+}}
+
+QTabBar::tab:hover {{
+    background-color: {_COLOR_TERTIARY_BG};
+}}
+
+QGroupBox {{
+    border: 1px solid {_COLOR_BORDER};
+    border-radius: 4px;
+    margin-top: 12px;
+    padding-top: 12px;
+    font-weight: bold;
+}}
+
+QGroupBox::title {{
+    subcontrol-origin: margin;
+    left: 10px;
+    padding: 0 4px;
+    color: {_COLOR_TEXT_PRIMARY};
+}}
+
+QFormLayout {{
+    spacing: 10px;
+}}
+
+QLineEdit, QComboBox, QSpinBox {{
+    background-color: {_COLOR_PRIMARY_BG};
+    border: 1px solid {_COLOR_BORDER};
+    border-radius: 4px;
+    padding: 6px 8px;
+    color: {_COLOR_TEXT_PRIMARY};
+}}
+
+QLineEdit:focus, QComboBox:focus, QSpinBox:focus {{
+    border: 1px solid {_COLOR_TEXT_SECONDARY};
+}}
+
+QLineEdit:disabled, QComboBox:disabled {{
+    background-color: {_COLOR_SECONDARY_BG};
+    color: {_COLOR_TEXT_SECONDARY};
+}}
+
+QPushButton {{
+    background-color: {_COLOR_BUTTON_BG};
+    border: 1px solid {_COLOR_BORDER};
+    border-radius: 4px;
+    padding: 6px 16px;
+    color: {_COLOR_TEXT_PRIMARY};
+    min-width: 70px;
+}}
+
+QPushButton:hover {{
+    background-color: {_COLOR_BUTTON_HOVER};
+}}
+
+QPushButton:pressed {{
+    background-color: {_COLOR_SELECTED};
+}}
+
+QPushButton:disabled {{
+    background-color: {_COLOR_SECONDARY_BG};
+    color: {_COLOR_TEXT_SECONDARY};
+}}
+
+QPushButton[default="true"] {{
+    background-color: {_COLOR_TEXT_PRIMARY};
+    color: {_COLOR_PRIMARY_BG};
+    border: 1px solid {_COLOR_TEXT_PRIMARY};
+}}
+
+QPushButton[default="true"]:hover {{
+    background-color: {_COLOR_TEXT_SECONDARY};
+}}
+
+QCheckBox {{
+    spacing: 8px;
+    color: {_COLOR_TEXT_PRIMARY};
+}}
+
+QCheckBox::indicator {{
+    width: 16px;
+    height: 16px;
+    border: 1px solid {_COLOR_BORDER};
+    border-radius: 3px;
+    background-color: {_COLOR_PRIMARY_BG};
+}}
+
+QCheckBox::indicator:checked {{
+    background-color: {_COLOR_TEXT_PRIMARY};
+    border: 1px solid {_COLOR_TEXT_PRIMARY};
+}}
+
+QListWidget {{
+    background-color: {_COLOR_PRIMARY_BG};
+    border: 1px solid {_COLOR_BORDER};
+    border-radius: 4px;
+    outline: none;
+}}
+
+QListWidget::item {{
+    padding: 6px 8px;
+    border-bottom: 1px solid {_COLOR_SECONDARY_BG};
+}}
+
+QListWidget::item:selected {{
+    background-color: {_COLOR_SELECTED};
+    color: {_COLOR_TEXT_PRIMARY};
+}}
+
+QListWidget::item:hover {{
+    background-color: {_COLOR_TERTIARY_BG};
+}}
+
+QPlainTextEdit {{
+    background-color: {_COLOR_PRIMARY_BG};
+    border: 1px solid {_COLOR_BORDER};
+    border-radius: 4px;
+    padding: 8px;
+    color: {_COLOR_TEXT_PRIMARY};
+}}
+
+QPlainTextEdit:focus {{
+    border: 1px solid {_COLOR_TEXT_SECONDARY};
+}}
+
+QLabel {{
+    color: {_COLOR_TEXT_PRIMARY};
+}}
+
+QScrollBar:vertical {{
+    width: 10px;
+    background: {_COLOR_SECONDARY_BG};
+}}
+
+QScrollBar::handle:vertical {{
+    background: {_COLOR_BORDER};
+    border-radius: 4px;
+    min-height: 20px;
+}}
+
+QScrollBar::handle:vertical:hover {{
+    background: {_COLOR_TEXT_SECONDARY};
+}}
+
+QMessageBox {{
+    background-color: {_COLOR_PRIMARY_BG};
+}}
+"""
+
 _MODEL_PRESETS: list[str] = [
     "gpt-4o",
     "claude-3-5-sonnet-20241022",
@@ -183,6 +370,7 @@ class SettingsUI(QDialog):
         self.setMinimumSize(640, 480)
         self.setModal(True)
         self.setWindowIcon(self._load_icon())
+        self.setStyleSheet(_MAIN_STYLESHEET)
 
         root_layout = QVBoxLayout(self)
         root_layout.setContentsMargins(12, 12, 12, 12)
