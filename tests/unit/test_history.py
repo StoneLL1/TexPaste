@@ -34,7 +34,7 @@ def test_save_returns_id(repo: HistoryRepository) -> None:
 def test_list_newest_first(repo: HistoryRepository) -> None:
     repo.save("text", "first")
     repo.save("latex", "second")
-    records = repo.list()
+    records = repo.list_records()
     assert records[0].result == "second"
     assert records[1].result == "first"
 
@@ -42,8 +42,8 @@ def test_list_newest_first(repo: HistoryRepository) -> None:
 def test_list_pagination(repo: HistoryRepository) -> None:
     for i in range(5):
         repo.save("text", f"item {i}")
-    page1 = repo.list(limit=2, offset=0)
-    page2 = repo.list(limit=2, offset=2)
+    page1 = repo.list_records(limit=2, offset=0)
+    page2 = repo.list_records(limit=2, offset=2)
     assert len(page1) == 2
     assert len(page2) == 2
     assert page1[0].result != page2[0].result
@@ -96,7 +96,7 @@ def test_delete_expired(repo: HistoryRepository) -> None:
     deleted = repo.delete_expired(retention_days=7)
     assert deleted == 1
     assert repo.count() == 1
-    assert repo.list()[0].result == "new record"
+    assert repo.list_records()[0].result == "new record"
 
 
 def test_delete_expired_keeps_recent(repo: HistoryRepository) -> None:

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PyQt6.QtCore import QTimer, Qt
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
     QDialog,
@@ -117,7 +117,7 @@ class HistoryUI(QDialog):
             if query:
                 records = self._repo.search(query)
             else:
-                records = self._repo.list(limit=100)
+                records = self._repo.list_records(limit=100)
         except Exception:
             logger.exception("Failed to load history records")
             records = []

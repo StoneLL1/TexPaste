@@ -6,7 +6,9 @@ from pathlib import Path
 from typing import Any
 
 import httpx
-from PyQt6.QtCore import QObject, QThread, pyqtSignal as Signal, pyqtSlot as Slot
+from PyQt6.QtCore import QObject, QThread
+from PyQt6.QtCore import pyqtSignal as Signal
+from PyQt6.QtCore import pyqtSlot as Slot
 
 from core.clipboard import detect_content_type
 from utils.config import ConfigManager
@@ -31,8 +33,7 @@ class RecognitionWorker(QObject):
     finished = Signal(str, str)  # (result, content_type_value)
     failed = Signal(str)  # (error_message)
 
-    def __init__(self, image_bytes: bytes, config: dict[str, Any],
-                 system_prompt: str = "") -> None:
+    def __init__(self, image_bytes: bytes, config: dict[str, Any], system_prompt: str = "") -> None:
         super().__init__()
         self._image_bytes = image_bytes
         self._config = config
@@ -133,7 +134,10 @@ class RecognitionWorker(QObject):
         logger.info("[DIAG] API endpoint: %s/chat/completions", endpoint)
         logger.info("[DIAG] Model: %s", model)
         logger.info("[DIAG] System prompt length: %d", len(system_prompt))
-        logger.info("[DIAG] User content items: %d (text + image_url)", len(payload["messages"][1]["content"]))
+        logger.info(
+            "[DIAG] User content items: %d (text + image_url)",
+            len(payload["messages"][1]["content"]),
+        )
 
         # NOTE: API key is never logged — only used in the Authorization header.
         headers = {
@@ -141,7 +145,9 @@ class RecognitionWorker(QObject):
             "Content-Type": "application/json",
         }
 
-        logger.debug("Sending recognition request to %s/chat/completions (model=%s)", endpoint, model)
+        logger.debug(
+            "Sending recognition request to %s/chat/completions (model=%s)", endpoint, model
+        )
 
         async with httpx.AsyncClient(timeout=timeout) as client:
             resp = await client.post(

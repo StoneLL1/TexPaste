@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+from typing import Any
+
 import httpx
-from PyQt6.QtCore import QObject, QThread, pyqtSignal as Signal, pyqtSlot as Slot
+from PyQt6.QtCore import QObject, QThread
+from PyQt6.QtCore import pyqtSignal as Signal
+from PyQt6.QtCore import pyqtSlot as Slot
 
 from utils.config import ConfigManager
 from utils.logger import get_logger
@@ -27,7 +31,7 @@ class _UpdateWorker(QObject):
                 response = client.get(self._url)
                 response.raise_for_status()
 
-            data: dict = response.json()
+            data: dict[str, Any] = response.json()
             tag_name: str = data.get("tag_name", "")
             html_url: str = data.get("html_url", "")
 
@@ -106,7 +110,9 @@ class UpdateChecker(QObject):
             return
 
         if not url.startswith(("http://", "https://")):
-            logger.warning("UpdateChecker: update.check_url does not look like a valid URL: %s", url)
+            logger.warning(
+                "UpdateChecker: update.check_url does not look like a valid URL: %s", url
+            )
             return
 
         logger.info("UpdateChecker: checking for updates at %s", url)
@@ -134,9 +140,7 @@ class UpdateChecker(QObject):
     def _on_worker_finished(self, latest_version: str, download_url: str) -> None:
         """Compare the fetched version with the current app version."""
         current_version: str = self._config.get("version", "1.0.0")
-        logger.info(
-            "UpdateChecker: current=%s  latest=%s", current_version, latest_version
-        )
+        logger.info("UpdateChecker: current=%s  latest=%s", current_version, latest_version)
 
         try:
             if _parse_version(latest_version) > _parse_version(current_version):

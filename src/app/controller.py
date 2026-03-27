@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-import logging
 from datetime import datetime
-from pathlib import Path
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QObject, QTimer, pyqtSlot as Slot
+from PyQt6.QtCore import QObject, QTimer
+from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtWidgets import QSystemTrayIcon
 
-from app.screenshot_overlay import ScreenshotOverlay
 from app.tray import TrayManager
 from core.clipboard import ClipboardManager, detect_content_type
 from core.hotkey import HotkeyManager
@@ -130,7 +128,9 @@ class AppController(QObject):
     @Slot()
     def _on_screenshot_hotkey(self) -> None:
         if self._paused or self._state != AppState.IDLE:
-            logger.debug("Screenshot hotkey ignored (paused=%s, state=%s)", self._paused, self._state)
+            logger.debug(
+                "Screenshot hotkey ignored (paused=%s, state=%s)", self._paused, self._state
+            )
             return
         logger.info("Screenshot hotkey triggered")
         self._set_state(AppState.CAPTURING)
@@ -198,7 +198,9 @@ class AppController(QObject):
         # LLM returned [UNREADABLE] — treat as recognition failure
         if result.strip() == "[UNREADABLE]":
             logger.warning("LLM returned [UNREADABLE] — image could not be recognised by the model")
-            self._on_recognition_failed("图片无法识别，请检查：① 截图区域是否包含清晰内容；② API 模型是否支持图像输入（视觉模型）")
+            self._on_recognition_failed(
+                "图片无法识别，请检查：① 截图区域是否包含清晰内容；② API 模型是否支持图像输入（视觉模型）"
+            )
             return
 
         self.clipboard.set_text(result)
@@ -281,13 +283,15 @@ class AppController(QObject):
         if success:
             self.tray.set_status_normal()
             if self._should_notify("paste_success"):
-                self.tray.show_notification("TexPaste", message,
-                                            QSystemTrayIcon.MessageIcon.Information)
+                self.tray.show_notification(
+                    "TexPaste", message, QSystemTrayIcon.MessageIcon.Information
+                )
         else:
             self.tray.set_status_error()
             if self._should_notify("error"):
-                self.tray.show_notification("TexPaste", f"粘贴失败：{message}",
-                                            QSystemTrayIcon.MessageIcon.Warning)
+                self.tray.show_notification(
+                    "TexPaste", f"粘贴失败：{message}", QSystemTrayIcon.MessageIcon.Warning
+                )
             QTimer.singleShot(5000, self.tray.set_status_normal)
 
     # ------------------------------------------------------------------
@@ -329,11 +333,13 @@ class AppController(QObject):
         self.hotkey_manager.unregister()
         self.history_repo.close()
         from PyQt6.QtWidgets import QApplication
+
         QApplication.quit()
 
     @Slot()
     def _on_update_check_requested(self) -> None:
         from utils.updater import UpdateChecker
+
         checker = UpdateChecker(self.config)
         checker.check_once()
 

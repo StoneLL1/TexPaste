@@ -46,7 +46,9 @@ class ClipboardManager:
             self._logger.error("set_text called but QApplication clipboard is unavailable")
             return
         clipboard.setText(text)
-        self._logger.debug("Clipboard updated (%d chars, type=%s)", len(text), detect_content_type(text))
+        self._logger.debug(
+            "Clipboard updated (%d chars, type=%s)", len(text), detect_content_type(text)
+        )
 
     def get_text(self) -> str:
         """Read and return the current plain-text contents of the system clipboard.

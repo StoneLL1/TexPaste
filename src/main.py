@@ -11,11 +11,11 @@ _src_dir = Path(__file__).parent
 if str(_src_dir) not in sys.path:
     sys.path.insert(0, str(_src_dir))
 
-from PyQt6.QtGui import QIcon
+from PyQt6.QtGui import QIcon  # noqa: E402
 from PyQt6.QtWidgets import QApplication, QMessageBox  # noqa: E402
 
-from utils.logger import get_app_data_dir, setup_logger  # noqa: E402
 from utils.config import ConfigManager  # noqa: E402
+from utils.logger import get_app_data_dir, setup_logger  # noqa: E402
 from utils.startup import StartupChecker  # noqa: E402
 
 
@@ -44,7 +44,7 @@ def _load_app_icon() -> QIcon:
 
 def _show_fatal_error(title: str, message: str) -> None:
     """Display a modal error dialog, then exit."""
-    app = QApplication.instance() or QApplication(sys.argv)
+    _ = QApplication.instance() or QApplication(sys.argv)  # Ensure QApplication exists
     QMessageBox.critical(None, title, message)  # type: ignore[arg-type]
     sys.exit(1)
 
@@ -110,8 +110,10 @@ def main() -> None:
     # Show non-fatal warnings via tray after event loop starts
     if warnings:
         from PyQt6.QtCore import QTimer
+
         for warning in warnings:
             from PyQt6.QtWidgets import QSystemTrayIcon
+
             QTimer.singleShot(
                 1000,
                 lambda msg=warning.message: controller.tray.show_notification(

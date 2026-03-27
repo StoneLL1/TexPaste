@@ -4,13 +4,13 @@ import webbrowser
 from pathlib import Path
 
 import httpx
-from PyQt6.QtCore import QObject, QThread, pyqtSignal as Signal, Qt
+from PyQt6.QtCore import QObject, Qt, QThread
+from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QDialog,
-    QDialogButtonBox,
     QFileDialog,
     QFormLayout,
     QGroupBox,
@@ -38,9 +38,7 @@ from utils.updater import UpdateChecker
 logger = get_logger(__name__)
 
 
-def _get_connection_error_message(
-    status_code: int, model: str, endpoint: str
-) -> str:
+def _get_connection_error_message(status_code: int, model: str, endpoint: str) -> str:
     """Convert HTTP status code and context to user-friendly error message.
 
     Args:
@@ -69,6 +67,7 @@ def _get_connection_error_message(
         return f"❌ API 服务器出现问题 (HTTP {status_code})。请稍后重试或联系 API 提供商。"
     else:
         return f"❌ 连接失败 (HTTP {status_code})。请检查 API 配置。"
+
 
 _PROMPTS_DIR = Path(__file__).parent.parent / "resources" / "prompts"
 
@@ -215,7 +214,7 @@ QCheckBox::indicator {{
 QCheckBox::indicator:checked {{
     background-color: {_COLOR_PRIMARY_BG};
     border: 1px solid {_COLOR_TEXT_PRIMARY};
-    image: url({_CHECKMARK_ICON_PATH.replace(chr(92), '/')});
+    image: url({_CHECKMARK_ICON_PATH.replace(chr(92), "/")});
 }}
 
 QListWidget {{
@@ -289,9 +288,7 @@ class _ConnectionWorker(QObject):
     succeeded = Signal()
     failed = Signal(str)
 
-    def __init__(
-        self, endpoint: str, api_key: str, timeout: int, model: str = ""
-    ) -> None:
+    def __init__(self, endpoint: str, api_key: str, timeout: int, model: str = "") -> None:
         super().__init__()
         self._endpoint = endpoint.rstrip("/")
         self._api_key = api_key
@@ -318,9 +315,7 @@ class _ConnectionWorker(QObject):
                     "max_tokens": 1,
                 }
                 with httpx.Client(timeout=self._timeout) as client:
-                    response = client.post(
-                        test_url, json=payload, headers=headers
-                    )
+                    response = client.post(test_url, json=payload, headers=headers)
             else:
                 test_url = f"{self._endpoint}/models"
                 self._logger.debug("Testing API connection: %s", test_url)
@@ -406,9 +401,7 @@ class SettingsUI(QDialog):
 
         # Endpoint
         self._endpoint_edit = QLineEdit()
-        self._endpoint_edit.setPlaceholderText(
-            "https://api.openai.com/v1"
-        )
+        self._endpoint_edit.setPlaceholderText("https://api.openai.com/v1")
         form.addRow("API 地址", self._endpoint_edit)
 
         # API Key (masked)
@@ -438,9 +431,7 @@ class SettingsUI(QDialog):
 
         # Test button (aligned left)
         self._test_btn = QPushButton("测试连接")
-        self._test_btn.setSizePolicy(
-            QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed
-        )
+        self._test_btn.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         self._test_btn.clicked.connect(self._test_connection)
         form.addRow("", self._test_btn)
 
@@ -464,9 +455,7 @@ class SettingsUI(QDialog):
         pandoc_row.addWidget(self._pandoc_edit)
 
         browse_btn = QPushButton("浏览...")
-        browse_btn.setSizePolicy(
-            QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed
-        )
+        browse_btn.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         browse_btn.clicked.connect(self._browse_pandoc)
         pandoc_row.addWidget(browse_btn)
 
@@ -668,9 +657,7 @@ class SettingsUI(QDialog):
         self._rename_template_btn.setEnabled(has_selection and not is_preset)
         self._delete_template_btn.setEnabled(has_selection and not is_preset)
         self._set_current_btn.setEnabled(has_selection)
-        self._add_template_btn.setEnabled(
-            len(self._custom_templates) < _MAX_CUSTOM_TEMPLATES
-        )
+        self._add_template_btn.setEnabled(len(self._custom_templates) < _MAX_CUSTOM_TEMPLATES)
 
     def _get_all_template_names(self) -> list[str]:
         """Return all template names (preset + custom)."""
@@ -687,14 +674,16 @@ class SettingsUI(QDialog):
         name = name.strip()
 
         if name in self._get_all_template_names():
-            QMessageBox.warning(self, "名称冲突", f"模板名称 \"{name}\" 已存在。")
+            QMessageBox.warning(self, "名称冲突", f'模板名称 "{name}" 已存在。')
             return
 
         self._save_editor_to_current_custom()
-        self._custom_templates.append({
-            "name": name,
-            "prompt": "You are a recognition assistant.\n\nAnalyze the provided image and output the recognized content.",
-        })
+        self._custom_templates.append(
+            {
+                "name": name,
+                "prompt": "You are a recognition assistant.\n\nAnalyze the provided image and output the recognized content.",
+            }
+        )
         self._populate_template_list()
         # Select the new template
         self._template_list.setCurrentRow(self._template_list.count() - 1)
@@ -716,7 +705,7 @@ class SettingsUI(QDialog):
             return
 
         if new_name in self._get_all_template_names():
-            QMessageBox.warning(self, "名称冲突", f"模板名称 \"{new_name}\" 已存在。")
+            QMessageBox.warning(self, "名称冲突", f'模板名称 "{new_name}" 已存在。')
             return
 
         self._custom_templates[idx]["name"] = new_name
@@ -739,7 +728,9 @@ class SettingsUI(QDialog):
         name = self._custom_templates[idx]["name"]
 
         reply = QMessageBox.question(
-            self, "确认删除", f"确定要删除模板 \"{name}\" 吗？",
+            self,
+            "确认删除",
+            f'确定要删除模板 "{name}" 吗？',
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         )
         if reply != QMessageBox.StandardButton.Yes:
@@ -788,9 +779,7 @@ class SettingsUI(QDialog):
 
     def _load_settings(self) -> None:
         """Populate all widgets from ConfigManager."""
-        self._endpoint_edit.setText(
-            self._config.get("api.endpoint", "https://api.openai.com/v1")
-        )
+        self._endpoint_edit.setText(self._config.get("api.endpoint", "https://api.openai.com/v1"))
         self._api_key_edit.setText(self._config.get("api.key", ""))
 
         model: str = self._config.get("api.model", "gpt-4o")
@@ -804,27 +793,17 @@ class SettingsUI(QDialog):
         self._retries_spin.setValue(int(self._config.get("api.retries", 3)))
 
         self._pandoc_edit.setText(self._config.get("general.pandoc_path", ""))
-        self._auto_update_check.setChecked(
-            bool(self._config.get("general.auto_update", True))
-        )
+        self._auto_update_check.setChecked(bool(self._config.get("general.auto_update", True)))
 
         # Notification toggles
         self._notif_recognition.setChecked(
             bool(self._config.get("notifications.recognition_success", True))
         )
-        self._notif_paste.setChecked(
-            bool(self._config.get("notifications.paste_success", False))
-        )
-        self._notif_error.setChecked(
-            bool(self._config.get("notifications.error", True))
-        )
+        self._notif_paste.setChecked(bool(self._config.get("notifications.paste_success", False)))
+        self._notif_error.setChecked(bool(self._config.get("notifications.error", True)))
 
-        self._screenshot_key_edit.setText(
-            self._config.get("hotkeys.screenshot", "ctrl+shift+a")
-        )
-        self._paste_key_edit.setText(
-            self._config.get("hotkeys.paste", "ctrl+shift+v")
-        )
+        self._screenshot_key_edit.setText(self._config.get("hotkeys.screenshot", "ctrl+shift+a"))
+        self._paste_key_edit.setText(self._config.get("hotkeys.paste", "ctrl+shift+v"))
 
         # Templates
         self._current_template = self._config.get("templates.current", "智能识别")
@@ -958,9 +937,7 @@ class SettingsUI(QDialog):
 
         # Check update button
         self._check_update_btn = QPushButton("检查更新")
-        self._check_update_btn.setSizePolicy(
-            QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed
-        )
+        self._check_update_btn.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         self._check_update_btn.clicked.connect(self._check_for_update)
         version_layout.addWidget(self._check_update_btn)
 
@@ -997,6 +974,7 @@ class SettingsUI(QDialog):
         # Reset button after a delay (UpdateChecker doesn't have a "no update" signal)
         # We'll use a timer to reset the button state
         from PyQt6.QtCore import QTimer
+
         QTimer.singleShot(3000, self._reset_update_btn)
 
     def _on_update_available(self, latest_version: str, download_url: str) -> None:

@@ -24,23 +24,23 @@ def main() -> None:
     print("TexPaste build pipeline starting…")
 
     # 1. Lint
-    run(["ruff", "check", "src/"], "Ruff lint")
+    run([sys.executable, "-m", "ruff", "check", "src/"], "Ruff lint")
 
     # 2. Format check
-    run(["ruff", "format", "--check", "src/"], "Ruff format check")
+    run([sys.executable, "-m", "ruff", "format", "--check", "src/"], "Ruff format check")
 
     # 3. Type check
-    run(["mypy", "src/utils/", "src/models/", "--strict"], "mypy type check")
+    run([sys.executable, "-m", "mypy", "src/utils/", "src/models/", "--strict"], "mypy type check")
 
     # 4. Unit tests
     run(
-        ["python", "-m", "pytest", "tests/unit/", "-v", "--tb=short",
+        [sys.executable, "-m", "pytest", "tests/unit/", "-v", "--tb=short",
          "-m", "not integration"],
         "Unit tests",
     )
 
     # 5. Package
-    run(["pyinstaller", "texpaste.spec", "--clean", "--noconfirm"], "PyInstaller packaging")
+    run([sys.executable, "-m", "PyInstaller", "texpaste.spec", "--clean", "--noconfirm"], "PyInstaller packaging")
 
     print("\n[SUCCESS] Build complete — dist/TexPaste.exe")
 

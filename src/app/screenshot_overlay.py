@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from PyQt6.QtCore import QBuffer, QByteArray, QPoint, QRect, Qt, pyqtSignal as Signal
+from PyQt6.QtCore import QBuffer, QPoint, QRect, Qt
+from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtGui import QColor, QPainter, QPixmap
 from PyQt6.QtWidgets import QApplication, QRubberBand, QWidget
 

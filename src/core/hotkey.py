@@ -1,19 +1,17 @@
 from __future__ import annotations
 
 import threading
-from typing import Optional
 
 from pynput import keyboard
-from PyQt6.QtCore import QObject, pyqtSignal as Signal
+from PyQt6.QtCore import QObject
+from PyQt6.QtCore import pyqtSignal as Signal
 
 from utils.logger import get_logger
 
 logger = get_logger(__name__)
 
 # Multi-char modifier keys that must be wrapped in angle brackets for pynput GlobalHotKeys
-_MODIFIER_KEYS: frozenset[str] = frozenset(
-    {"ctrl", "shift", "alt", "win", "cmd", "meta", "super"}
-)
+_MODIFIER_KEYS: frozenset[str] = frozenset({"ctrl", "shift", "alt", "win", "cmd", "meta", "super"})
 
 
 def _convert_key_string(key_str: str) -> str:
@@ -49,10 +47,10 @@ class HotkeyManager(QObject):
     screenshot_triggered: Signal = Signal()
     paste_triggered: Signal = Signal()
 
-    def __init__(self, parent: Optional[QObject] = None) -> None:
+    def __init__(self, parent: QObject | None = None) -> None:
         super().__init__(parent)
-        self._listener: Optional[keyboard.GlobalHotKeys] = None
-        self._thread: Optional[threading.Thread] = None
+        self._listener: keyboard.GlobalHotKeys | None = None
+        self._thread: threading.Thread | None = None
         self._lock = threading.Lock()
 
     # ------------------------------------------------------------------
@@ -71,7 +69,9 @@ class HotkeyManager(QObject):
         """
         with self._lock:
             if self._listener is not None:
-                logger.warning("HotkeyManager.register called while listener is active; stopping first.")
+                logger.warning(
+                    "HotkeyManager.register called while listener is active; stopping first."
+                )
                 self._stop_listener()
 
             pynput_screenshot = _convert_key_string(screenshot_key)

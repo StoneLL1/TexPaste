@@ -4,7 +4,8 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from PyQt6.QtCore import QObject, pyqtSignal as Signal
+from PyQt6.QtCore import QObject
+from PyQt6.QtCore import pyqtSignal as Signal
 
 from models.enums import ContentType
 from utils.logger import get_logger
@@ -15,9 +16,9 @@ logger = get_logger("word_paste")
 def is_word_wps_active() -> tuple[bool, str]:
     """Return (True, app_name) if the foreground window belongs to Word or WPS."""
     try:
+        import psutil
         import win32gui
         import win32process
-        import psutil
     except ImportError:
         logger.warning("pywin32/psutil not available — is_word_wps_active always returns False")
         return False, ""
@@ -77,9 +78,7 @@ class PandocConverter:
             md_path.unlink(missing_ok=True)
 
         if result.returncode != 0:
-            raise RuntimeError(
-                f"Pandoc failed (exit {result.returncode}): {result.stderr.strip()}"
-            )
+            raise RuntimeError(f"Pandoc failed (exit {result.returncode}): {result.stderr.strip()}")
 
         return docx_path
 
@@ -156,9 +155,7 @@ class WordPasteService:
 
         return self._insert_docx(word, selection, docx_path)
 
-    def _insert_docx(
-        self, word: object, selection: object, docx_path: Path
-    ) -> tuple[bool, str]:
+    def _insert_docx(self, word: object, selection: object, docx_path: Path) -> tuple[bool, str]:
         """Open *docx_path* via COM, copy its content, paste at *selection*, then close."""
         tmp_doc = None
         try:

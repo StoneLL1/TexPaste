@@ -37,8 +37,8 @@ class StartupChecker:
 
     def _check_single_instance(self) -> StartupError | None:
         try:
-            import win32event
             import win32api
+            import win32event
 
             handle = win32event.CreateMutex(None, True, _MUTEX_NAME)
             last_error = win32api.GetLastError()

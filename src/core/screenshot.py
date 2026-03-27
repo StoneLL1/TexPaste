@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from PyQt6.QtCore import QObject, pyqtSignal as Signal
+from PyQt6.QtCore import QObject
+from PyQt6.QtCore import pyqtSignal as Signal
 
 from app.screenshot_overlay import ScreenshotOverlay
 from utils.logger import get_logger

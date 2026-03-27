@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import sqlite3
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from models.history import HistoryRecord
@@ -69,7 +69,7 @@ class HistoryRepository:
         api_model: str | None = None,
     ) -> int:
         """Insert a new history record and return its ID."""
-        created_at = datetime.now(tz=timezone.utc).isoformat()
+        created_at = datetime.now(tz=UTC).isoformat()
         conn = self._get_conn()
         cursor = conn.execute(
             "INSERT INTO history (created_at, content_type, result, thumbnail, api_model)"
@@ -80,7 +80,7 @@ class HistoryRepository:
         logger.info("History saved id=%d content_type=%s", cursor.lastrowid, content_type)
         return cursor.lastrowid or 0
 
-    def list(self, limit: int = 50, offset: int = 0) -> list[HistoryRecord]:
+    def list_records(self, limit: int = 50, offset: int = 0) -> list[HistoryRecord]:
         """Return paginated history records, newest first."""
         conn = self._get_conn()
         rows = conn.execute(
@@ -112,7 +112,7 @@ class HistoryRepository:
 
     def delete_expired(self, retention_days: int = 7) -> int:
         """Delete records older than retention_days. Returns count deleted."""
-        cutoff = (datetime.now(tz=timezone.utc) - timedelta(days=retention_days)).isoformat()
+        cutoff = (datetime.now(tz=UTC) - timedelta(days=retention_days)).isoformat()
         conn = self._get_conn()
         cursor = conn.execute("DELETE FROM history WHERE created_at < ?", (cutoff,))
         conn.commit()
@@ -123,7 +123,8 @@ class HistoryRepository:
 
     def count(self) -> int:
         conn = self._get_conn()
-        return conn.execute("SELECT COUNT(*) FROM history").fetchone()[0]
+        result = conn.execute("SELECT COUNT(*) FROM history").fetchone()
+        return result[0] if result else 0
 
 
 def _row_to_record(row: sqlite3.Row) -> HistoryRecord:
