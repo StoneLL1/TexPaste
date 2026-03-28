@@ -338,7 +338,6 @@ class AppController(QObject):
 
     @Slot()
     def _on_update_check_requested(self) -> None:
-        from PyQt6.QtWidgets import QMessageBox
 
         from utils.updater import UpdateChecker
 
