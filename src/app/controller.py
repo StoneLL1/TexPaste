@@ -338,10 +338,46 @@ class AppController(QObject):
 
     @Slot()
     def _on_update_check_requested(self) -> None:
+        from PyQt6.QtWidgets import QMessageBox
+
         from utils.updater import UpdateChecker
 
-        checker = UpdateChecker(self.config)
-        checker.check_once()
+        # Store as instance attribute to prevent garbage collection while thread runs
+        self._update_checker = UpdateChecker(self.config, parent=self)
+        self._update_checker.update_available.connect(self._on_tray_update_available)
+        self._update_checker.up_to_date.connect(self._on_tray_up_to_date)
+        self._update_checker.check_failed.connect(self._on_tray_update_failed)
+        self._update_checker.check_once()
+
+    @Slot(str, str)
+    def _on_tray_update_available(self, latest_version: str, download_url: str) -> None:
+        import webbrowser
+
+        from PyQt6.QtWidgets import QMessageBox
+
+        reply = QMessageBox.question(
+            None,
+            "发现新版本",
+            f"请更新到最新版本 v{latest_version}\n\n是否打开下载页面？",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        )
+        if reply == QMessageBox.StandardButton.Yes:
+            webbrowser.open(download_url)
+
+    @Slot()
+    def _on_tray_up_to_date(self) -> None:
+        from PyQt6.QtWidgets import QMessageBox
+
+        QMessageBox.information(None, "检查更新", "已是最新版本。")
+
+    @Slot(str)
+    def _on_tray_update_failed(self, error_msg: str) -> None:
+        if self._should_notify("error"):
+            self.tray.show_notification(
+                "TexPaste",
+                f"检查更新失败：{error_msg}",
+                QSystemTrayIcon.MessageIcon.Warning,
+            )
 
     # ------------------------------------------------------------------
     # Maintenance

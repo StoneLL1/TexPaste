@@ -969,13 +969,9 @@ class SettingsUI(QDialog):
 
         self._update_checker = UpdateChecker(self._config, self)
         self._update_checker.update_available.connect(self._on_update_available)
+        self._update_checker.up_to_date.connect(self._on_up_to_date)
+        self._update_checker.check_failed.connect(self._on_update_check_failed)
         self._update_checker.check_once()
-
-        # Reset button after a delay (UpdateChecker doesn't have a "no update" signal)
-        # We'll use a timer to reset the button state
-        from PyQt6.QtCore import QTimer
-
-        QTimer.singleShot(3000, self._reset_update_btn)
 
     def _on_update_available(self, latest_version: str, download_url: str) -> None:
         """Handle update available notification."""
@@ -983,11 +979,21 @@ class SettingsUI(QDialog):
         reply = QMessageBox.question(
             self,
             "发现新版本",
-            f"新版本 {latest_version} 已发布。\n\n是否打开下载页面？",
+            f"请更新到最新版本 v{latest_version}\n\n是否打开下载页面？",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         )
         if reply == QMessageBox.StandardButton.Yes:
             webbrowser.open(download_url)
+
+    def _on_up_to_date(self) -> None:
+        """Handle already up-to-date notification."""
+        self._reset_update_btn()
+        QMessageBox.information(self, "检查更新", "已是最新版本。")
+
+    def _on_update_check_failed(self, error_msg: str) -> None:
+        """Handle update check failure."""
+        self._reset_update_btn()
+        QMessageBox.warning(self, "检查更新失败", f"检查更新时出现错误：\n{error_msg}")
 
     def _reset_update_btn(self) -> None:
         """Reset the update check button to its default state."""

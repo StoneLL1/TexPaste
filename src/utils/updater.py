@@ -76,10 +76,14 @@ class UpdateChecker(QObject):
 
         checker = UpdateChecker(config)
         checker.update_available.connect(lambda ver, url: ...)
+        checker.up_to_date.connect(lambda: ...)
+        checker.check_failed.connect(lambda msg: ...)
         checker.check_once()
     """
 
     update_available = Signal(str, str)  # (latest_version, download_url)
+    up_to_date = Signal()  # already on the latest version
+    check_failed = Signal(str)  # error message
 
     def __init__(
         self,
@@ -152,9 +156,11 @@ class UpdateChecker(QObject):
                 self.update_available.emit(latest_version, download_url)
             else:
                 logger.info("UpdateChecker: already up to date.")
+                self.up_to_date.emit()
         except Exception as exc:  # noqa: BLE001
             logger.warning("UpdateChecker: version comparison failed: %s", exc)
 
     @Slot(str)
     def _on_worker_failed(self, error_msg: str) -> None:
         logger.warning("UpdateChecker: %s", error_msg)
+        self.check_failed.emit(error_msg)
