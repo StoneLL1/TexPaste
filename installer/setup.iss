@@ -94,8 +94,6 @@ Root: HKLM; Subkey: "Software\Microsoft\Windows\CurrentVersion\Uninstall\{#MyApp
 [Code]
 var
   PandocDetected: Boolean;
-  InstallPandocCheckBox: TNewCheckBox;
-  PandocInfoLabel: TLabel;
 
 // Check if Pandoc is installed in system PATH
 function IsPandocInstalled: Boolean;
@@ -129,7 +127,7 @@ var
   PandocMSI: String;
   FindRec: TFindRec;
 begin
-  if CurStep = ssInstall then
+  if CurStep = ssPostInstall then
   begin
     // Install Pandoc if not detected and MSI file exists
     if not PandocDetected then
