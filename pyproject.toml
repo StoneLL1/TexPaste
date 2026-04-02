@@ -1,6 +1,6 @@
 [project]
 name = "texpaste"
-version = "1.0.0"
+version = "1.2.0"
 description = "Windows desktop tool for OCR formula recognition and smart paste into Word/WPS"
 requires-python = ">=3.11"
 

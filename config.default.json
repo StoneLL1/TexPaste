@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0",
+  "version": "1.2.0",
   "api": {
     "endpoint": "https://api.openai.com/v1",
     "api_key": "",

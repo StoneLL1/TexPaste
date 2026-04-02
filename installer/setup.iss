@@ -1,5 +1,5 @@
 ; TexPaste Setup Script for Inno Setup 6
-; Version: 1.0.0
+; Version: 1.2.0
 ; Author: StoneLL1
 ; GitHub: https://github.com/StoneLL1/TexPaste
 
@@ -10,7 +10,7 @@
 
 ; Read version from config.default.json (preprocessor)
 ; Note: Version should be updated manually or via build script
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "1.2.0"
 
 [Setup]
 AppId={{8A7C9D6B-1234-5678-9ABC-DEF012345678}
