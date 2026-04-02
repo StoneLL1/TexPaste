@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from PyQt6.QtCore import QEvent, Qt
+from PyQt6.QtCore import QEvent, Qt, pyqtSignal
 from PyQt6.QtGui import QKeyEvent
 from PyQt6.QtWidgets import QLineEdit
 
@@ -35,6 +35,8 @@ class HotkeyRecorder(QLineEdit):
     User clicks the field -> types key combination -> field displays the combo.
     """
 
+    hotkeyChanged = pyqtSignal(str)  # Emitted when hotkey changes
+
     def __init__(self, parent: None = None) -> None:
         super().__init__(parent)
         self._current_keys: set[int] = set()
@@ -51,6 +53,8 @@ class HotkeyRecorder(QLineEdit):
         """Set hotkey programmatically (e.g., loading from config)."""
         self._recorded_hotkey = hotkey
         self.setText(hotkey)
+        if hotkey:
+            self.hotkeyChanged.emit(hotkey)
 
     def clearHotkey(self) -> None:
         """Clear the recorded hotkey."""
@@ -77,6 +81,7 @@ class HotkeyRecorder(QLineEdit):
         if key not in _MODIFIER_KEYS:
             self._recorded_hotkey = self._build_hotkey_string()
             logger.info("Hotkey recorded: %s", self._recorded_hotkey)
+            self.hotkeyChanged.emit(self._recorded_hotkey)
 
     def keyReleaseEvent(self, event: QKeyEvent) -> None:
         """Clear keys when released."""
