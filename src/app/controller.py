@@ -84,6 +84,7 @@ class AppController(QObject):
         self.tray.pause_toggled.connect(self._on_pause_toggled)
         self.tray.exit_requested.connect(self._on_exit_requested)
         self.tray.update_check_requested.connect(self._on_update_check_requested)
+        self.tray.screenshot_requested.connect(self._on_screenshot_hotkey)
 
     def _start_services(self) -> None:
         # Update template label in tray

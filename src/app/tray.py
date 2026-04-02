@@ -19,6 +19,7 @@ class TrayManager(QObject):
     pause_toggled = Signal(bool)
     exit_requested = Signal()
     update_check_requested = Signal()
+    screenshot_requested = Signal()  # Left-click to trigger screenshot
 
     def __init__(self, parent: QObject | None = None) -> None:
         super().__init__(parent)
@@ -63,6 +64,7 @@ class TrayManager(QObject):
         menu.addAction(exit_action)
 
         self._tray.setContextMenu(menu)
+        self._tray.activated.connect(self._on_tray_activated)
         self._tray.show()
 
         logger.info("TrayManager initialized")
@@ -103,6 +105,13 @@ class TrayManager(QObject):
             self.set_status_normal()
             logger.info("TexPaste resumed")
         self.pause_toggled.emit(self._is_paused)
+
+    @Slot(QSystemTrayIcon.ActivationReason)
+    def _on_tray_activated(self, reason: QSystemTrayIcon.ActivationReason) -> None:
+        """Handle tray icon activation (click events)."""
+        if reason == QSystemTrayIcon.ActivationReason.Trigger:
+            # Left-click triggers screenshot
+            self.screenshot_requested.emit()
 
     def update_template_label(self, name: str) -> None:
         """Update the template label in the tray menu."""
