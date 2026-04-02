@@ -31,6 +31,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from app.hotkey_recorder import HotkeyRecorder
 from utils.config import ConfigManager
 from utils.logger import get_logger
 from utils.updater import UpdateChecker
@@ -499,18 +500,16 @@ class SettingsUI(QDialog):
         form.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
 
         # Screenshot hotkey
-        self._screenshot_key_edit = QLineEdit()
-        self._screenshot_key_edit.setPlaceholderText("ctrl+shift+a")
-        form.addRow("截图快捷键", self._screenshot_key_edit)
+        self._screenshot_key_recorder = HotkeyRecorder()
+        form.addRow("截图快捷键", self._screenshot_key_recorder)
 
         # Paste hotkey
-        self._paste_key_edit = QLineEdit()
-        self._paste_key_edit.setPlaceholderText("ctrl+shift+v")
-        form.addRow("粘贴快捷键", self._paste_key_edit)
+        self._paste_key_recorder = HotkeyRecorder()
+        form.addRow("粘贴快捷键", self._paste_key_recorder)
 
-        # Format hint
-        hint_label = QLabel("格式：ctrl+shift+a，可使用 ctrl/shift/alt/win")
-        hint_label.setStyleSheet("color: gray; font-size: 11px;")
+        # Recording hint
+        hint_label = QLabel("点击输入框后按下快捷键组合即可自动录制")
+        hint_label.setStyleSheet("color: #666666; font-size: 11px;")
         form.addRow("", hint_label)
 
         # Reset to defaults button
@@ -808,8 +807,8 @@ class SettingsUI(QDialog):
         self._notif_paste.setChecked(bool(self._config.get("notifications.paste_success", False)))
         self._notif_error.setChecked(bool(self._config.get("notifications.error", True)))
 
-        self._screenshot_key_edit.setText(self._config.get("hotkeys.screenshot", "ctrl+shift+a"))
-        self._paste_key_edit.setText(self._config.get("hotkeys.paste", "ctrl+shift+v"))
+        self._screenshot_key_recorder.setHotkey(self._config.get("hotkeys.screenshot", "ctrl+shift+a"))
+        self._paste_key_recorder.setHotkey(self._config.get("hotkeys.paste", "ctrl+shift+v"))
 
         # Templates
         self._current_template = self._config.get("templates.current", "智能识别")
@@ -840,8 +839,8 @@ class SettingsUI(QDialog):
         self._config.set("notifications.paste_success", self._notif_paste.isChecked())
         self._config.set("notifications.error", self._notif_error.isChecked())
 
-        self._config.set("hotkeys.screenshot", self._screenshot_key_edit.text().strip())
-        self._config.set("hotkeys.paste", self._paste_key_edit.text().strip())
+        self._config.set("hotkeys.screenshot", self._screenshot_key_recorder.hotkey())
+        self._config.set("hotkeys.paste", self._paste_key_recorder.hotkey())
 
         # Templates — save editor content for current custom template first
         self._save_editor_to_current_custom()
@@ -870,8 +869,8 @@ class SettingsUI(QDialog):
 
     def _reset_hotkeys(self) -> None:
         """Restore screenshot and paste hotkeys to factory defaults."""
-        self._screenshot_key_edit.setText("ctrl+shift+a")
-        self._paste_key_edit.setText("ctrl+shift+v")
+        self._screenshot_key_recorder.setHotkey("ctrl+shift+a")
+        self._paste_key_recorder.setHotkey("ctrl+shift+v")
 
     def _test_connection(self) -> None:
         """Spin up a background thread to ping the configured API endpoint."""
