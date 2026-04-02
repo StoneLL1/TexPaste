@@ -509,7 +509,7 @@ class SettingsUI(QDialog):
 
         # Recording hint
         hint_label = QLabel("点击输入框后按下快捷键组合即可自动录制")
-        hint_label.setStyleSheet("color: #666666; font-size: 11px;")
+        hint_label.setStyleSheet(f"color: {_COLOR_TEXT_SECONDARY}; font-size: 11px;")
         form.addRow("", hint_label)
 
         # Reset to defaults button
