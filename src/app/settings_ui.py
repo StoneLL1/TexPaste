@@ -416,6 +416,12 @@ class SettingsUI(QDialog):
         self._model_combo.addItems(_MODEL_PRESETS)
         form.addRow("模型", self._model_combo)
 
+        # Model hint - inform user about multimodal requirement
+        model_hint = QLabel("💡 请配置支持图像输入的多模态大模型（如 GPT-4o、Claude Vision）")
+        model_hint.setStyleSheet(f"color: {_COLOR_TEXT_SECONDARY}; font-size: 11px; padding-left: 4px;")
+        model_hint.setWordWrap(True)
+        form.addRow("", model_hint)
+
         # Timeout
         self._timeout_spin = QSpinBox()
         self._timeout_spin.setRange(5, 120)
