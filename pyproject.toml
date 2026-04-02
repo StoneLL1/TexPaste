@@ -13,6 +13,7 @@ select = ["E", "F", "W", "I", "N", "UP", "B", "C4", "T20"]
 ignore = [
     "E501",
     "N802",   # Qt event handler names (mousePressEvent, etc.) are mandated by Qt framework
+    "N815",   # Qt signal names (textChanged, etc.) use camelCase by PyQt convention
     "UP042",  # StrEnum requires Python 3.11+, keep current pattern for compatibility
 ]
 
