@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from PyQt6.QtCore import QEvent, Qt, pyqtSignal
-from PyQt6.QtGui import QKeyEvent
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QFocusEvent, QKeyEvent
 from PyQt6.QtWidgets import QLineEdit
 
 from utils.logger import get_logger
@@ -126,7 +126,7 @@ class HotkeyRecorder(QLineEdit):
             return regular_key
         return ""
 
-    def focusInEvent(self, event: QEvent) -> None:
+    def focusInEvent(self, event: QFocusEvent) -> None:
         """Clear previous recording when user clicks to record new."""
         super().focusInEvent(event)
         self._current_keys.clear()
