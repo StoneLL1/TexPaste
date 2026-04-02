@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+import sys
 from pathlib import Path
 
 from utils.logger import get_logger
@@ -60,11 +61,16 @@ class StartupChecker:
 
     def _check_pandoc(self) -> StartupError | None:
         try:
+            creationflags = 0
+            if sys.platform == "win32":
+                creationflags = subprocess.CREATE_NO_WINDOW
+
             result = subprocess.run(
                 [self._pandoc_executable, "--version"],
                 capture_output=True,
                 text=True,
                 timeout=10,
+                creationflags=creationflags,
             )
             if result.returncode == 0:
                 version_line = result.stdout.split("\n")[0]
